@@ -5,6 +5,7 @@ description: "Python 3.13 development environment with SSH, zsh, neovim, and mod
 url: "https://github.com/yourusername/hass-python-dev-addon"
 webui: "http://[HOST]:[PORT:2322]"
 init: false
+full_access: true
 privileged:
   - SYS_ADMIN
   - NET_ADMIN

@@ -9,11 +9,23 @@ SSH_PORT=$(jq -r '.ssh_port // 2322' $CONFIG_PATH)
 # Get username from config (default: developer)
 USERNAME=$(jq -r '.username // "developer"' $CONFIG_PATH)
 
+# Create docker group if not exists and add root to docker group
+if ! getent group docker > /dev/null 2>&1; then
+    groupadd docker
+fi
+usermod -aG docker root
+
+# Set docker socket permissions
+if [ -S "/var/run/docker.sock" ]; then
+    chown root:docker /var/run/docker.sock
+    chmod 660 /var/run/docker.sock
+fi
+
 # Create user if not exists
 if ! id "$USERNAME" &>/dev/null; then
     echo "Creating user: $USERNAME"
     useradd -m -s /bin/zsh "$USERNAME"
-    usermod -aG sudo "$USERNAME"
+    usermod -aG sudo,docker "$USERNAME"
     
     # Configure passwordless sudo for user
     echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME
