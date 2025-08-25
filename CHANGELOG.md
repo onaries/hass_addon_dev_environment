@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [1.0.2] - 2025-08-25
+
+### Added
+- DAC_READ_SEARCH 권한 추가로 Docker 접근 개선
+- ubuntu_data 볼륨에서 share/workspace로 자동 데이터 마이그레이션 기능
+- 일회성 마이그레이션 방지를 위한 .migrated 플래그 파일
+
+### Changed
+- 볼륨 마운트 방식을 Home Assistant 표준 share 볼륨 사용으로 변경
+- /workspace가 /share/workspace로 심볼릭 링크되도록 개선
+
+### Fixed
+- ubuntu_data 커스텀 볼륨 마운트 문제 해결
+- Docker 소켓 접근을 위한 적절한 권한 설정
+
 ## [1.0.1] - 2025-08-25
 
 ### Added

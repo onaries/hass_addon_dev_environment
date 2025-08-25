@@ -1,5 +1,5 @@
 name: Python Development Environment
-version: "1.0.1"
+version: "1.0.2"
 slug: python_dev_env
 description: "Python 3.13 development environment with SSH, zsh, neovim, and modern tools"
 url: "https://github.com/yourusername/hass-python-dev-addon"
@@ -9,6 +9,7 @@ privileged:
   - SYS_ADMIN
   - NET_ADMIN
   - SYS_RESOURCE
+  - DAC_READ_SEARCH
 startup: services
 arch:
   - aarch64
@@ -26,10 +27,9 @@ map:
   - "addons:rw"
   - "backup:rw"
   - "share:rw"
-  - "ubuntu_data:/workspace:rw"
 devices:
   - "/var/run/docker.sock:/var/run/docker.sock:rw"
-  - "/var/lib/docker/volumes/ubuntu_data/_data:/workspace:rw"
+  - "/var/lib/docker/volumes/ubuntu_data/_data:/ubuntu_data_source:ro"
 options:
   ssh_keys: []
   password: ""

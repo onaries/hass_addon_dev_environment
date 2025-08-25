@@ -66,6 +66,22 @@ if [ -n "$SSH_KEYS" ]; then
     chown $USERNAME:$USERNAME /home/$USERNAME/.ssh/authorized_keys
 fi
 
+# Create workspace directory in share and link to /workspace
+mkdir -p /share/workspace
+
+# One-time migration from ubuntu_data volume if it exists and workspace is empty
+if [ -d "/ubuntu_data_source" ] && [ ! -f "/share/workspace/.migrated" ] && [ "$(ls -A /ubuntu_data_source 2>/dev/null)" ]; then
+    echo "Migrating data from ubuntu_data volume to /share/workspace..."
+    cp -a /ubuntu_data_source/* /share/workspace/ 2>/dev/null || echo "No files to migrate or migration failed"
+    touch /share/workspace/.migrated
+    echo "Migration completed. Original data is preserved in ubuntu_data volume."
+fi
+
+if [ ! -L "/workspace" ]; then
+    rm -rf /workspace
+    ln -s /share/workspace /workspace
+fi
+
 # Configure SSH port and allow user
 sed -i "s/#Port 22/Port $SSH_PORT/" /etc/ssh/sshd_config
 sed -i "s/AllowUsers root/AllowUsers root $USERNAME/" /etc/ssh/sshd_config
