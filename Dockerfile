@@ -4,17 +4,12 @@ FROM $BUILD_FROM
 # Set shell
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Install Python 3.13 and SSH server
+# Install packages (use available Python in base image)
 RUN apt-get update && \
     apt-get install -y \
-        software-properties-common \
-        gpg-agent \
-    && add-apt-repository ppa:deadsnakes/ppa \
-    && apt-get update && \
-    apt-get install -y \
-        python3.13 \
-        python3.13-dev \
-        python3.13-venv \
+        python3 \
+        python3-dev \
+        python3-venv \
         python3-pip \
         openssh-server \
         sudo \
@@ -26,11 +21,20 @@ RUN apt-get update && \
         build-essential \
         jq \
         zsh \
-        ripgrep \
-        fd-find \
+        ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /var/run/sshd \
     && mkdir -p /run/sshd
+
+# Install ripgrep manually
+RUN curl -LO https://github.com/BurntSushi/ripgrep/releases/download/14.1.1/ripgrep_14.1.1-1_amd64.deb && \
+    dpkg -i ripgrep_14.1.1-1_amd64.deb && \
+    rm ripgrep_14.1.1-1_amd64.deb
+
+# Install fd-find manually  
+RUN curl -LO https://github.com/sharkdp/fd/releases/download/v10.2.0/fd_10.2.0_amd64.deb && \
+    dpkg -i fd_10.2.0_amd64.deb && \
+    rm fd_10.2.0_amd64.deb
 
 # Install nvm (Node Version Manager)
 ENV NVM_DIR=/opt/nvm
