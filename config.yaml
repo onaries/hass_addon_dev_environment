@@ -1,0 +1,44 @@
+name: Python Development Environment
+version: "1.0.0"
+slug: python_dev_env
+description: "Python 3.13 development environment with SSH, zsh, neovim, and modern tools"
+url: "https://github.com/yourusername/hass-python-dev-addon"
+webui: "http://[HOST]:[PORT:2322]"
+init: false
+privileged:
+  - SYS_ADMIN
+  - NET_ADMIN
+startup: services
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+  - i386
+ports:
+  "2322/tcp": 2322
+ports_description:
+  "2322/tcp": "SSH port"
+map:
+  - "config:rw"
+  - "ssl:rw"
+  - "addons:rw"
+  - "backup:rw"
+  - "share:rw"
+  - "ubuntu_data:/workspace:rw"
+devices:
+  - "/var/run/docker.sock:/var/run/docker.sock:rw"
+options:
+  ssh_keys: []
+  password: ""
+  ssh_port: 2322
+  username: "developer"
+  user_password: ""
+schema:
+  ssh_keys:
+    - str?
+  password: str?
+  ssh_port: int(1,65535)?
+  username: str?
+  user_password: str?
+image: "ghcr.io/home-assistant/{arch}-addon-python-dev"
