@@ -8,6 +8,7 @@ init: false
 privileged:
   - SYS_ADMIN
   - NET_ADMIN
+  - SYS_RESOURCE
 startup: services
 arch:
   - aarch64
@@ -28,6 +29,7 @@ map:
   - "ubuntu_data:/workspace:rw"
 devices:
   - "/var/run/docker.sock:/var/run/docker.sock:rw"
+  - "/var/lib/docker/volumes/ubuntu_data/_data:/workspace:rw"
 options:
   ssh_keys: []
   password: ""
