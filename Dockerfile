@@ -22,9 +22,21 @@ RUN apt-get update && \
         jq \
         zsh \
         ca-certificates \
+        gnupg \
+        lsb-release \
+        htop \
+        tree \
+        tmux \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /var/run/sshd \
     && mkdir -p /run/sshd
+
+# Install Docker CLI and Docker Compose
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian bookworm stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    apt-get update && \
+    apt-get install -y docker-ce-cli docker-compose-plugin && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install search tools (try package manager first)
 RUN apt-get update && \
