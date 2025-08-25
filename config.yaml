@@ -41,4 +41,3 @@ schema:
   ssh_port: int(1,65535)?
   username: str?
   user_password: str?
-image: "ghcr.io/home-assistant/{arch}-addon-python-dev"
