@@ -26,15 +26,11 @@ RUN apt-get update && \
     && mkdir -p /var/run/sshd \
     && mkdir -p /run/sshd
 
-# Install ripgrep manually
-RUN curl -LO https://github.com/BurntSushi/ripgrep/releases/download/14.1.1/ripgrep_14.1.1-1_amd64.deb && \
-    dpkg -i ripgrep_14.1.1-1_amd64.deb && \
-    rm ripgrep_14.1.1-1_amd64.deb
-
-# Install fd-find manually  
-RUN curl -LO https://github.com/sharkdp/fd/releases/download/v10.2.0/fd_10.2.0_amd64.deb && \
-    dpkg -i fd_10.2.0_amd64.deb && \
-    rm fd_10.2.0_amd64.deb
+# Install search tools (try package manager first)
+RUN apt-get update && \
+    (apt-get install -y ripgrep || echo "ripgrep not available via apt") && \
+    (apt-get install -y fd-find || echo "fd-find not available via apt") && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install nvm (Node Version Manager)
 ENV NVM_DIR=/opt/nvm
@@ -49,21 +45,23 @@ RUN mkdir -p $NVM_DIR && \
 # Install oh-my-zsh globally
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
-# Install neovim latest binary
-RUN NVIM_VERSION=$(curl -s https://api.github.com/repos/neovim/neovim/releases/latest | jq -r '.tag_name') && \
-    curl -L "https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim-linux64.tar.gz" -o /tmp/nvim.tar.gz && \
-    tar -xzf /tmp/nvim.tar.gz -C /tmp && \
-    mv /tmp/nvim-linux64 /opt/nvim && \
-    ln -s /opt/nvim/bin/nvim /usr/local/bin/nvim && \
-    rm /tmp/nvim.tar.gz
+# Install neovim latest AppImage (works on all architectures)
+RUN curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim.appimage && \
+    chmod +x nvim.appimage && \
+    mv nvim.appimage /usr/local/bin/nvim && \
+    apt-get update && \
+    apt-get install -y fuse && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install zellij latest binary
-RUN ZELLIJ_VERSION=$(curl -s https://api.github.com/repos/zellij-org/zellij/releases/latest | jq -r '.tag_name' | sed 's/^v//') && \
-    curl -L "https://github.com/zellij-org/zellij/releases/download/v${ZELLIJ_VERSION}/zellij-x86_64-unknown-linux-musl.tar.gz" -o /tmp/zellij.tar.gz && \
-    tar -xzf /tmp/zellij.tar.gz -C /tmp && \
-    mv /tmp/zellij /usr/local/bin/ && \
-    chmod +x /usr/local/bin/zellij && \
-    rm /tmp/zellij.tar.gz
+# Install zellij from pre-compiled binary (x86_64 only, skip on other architectures)
+RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
+        ZELLIJ_VERSION=$(curl -s https://api.github.com/repos/zellij-org/zellij/releases/latest | jq -r '.tag_name' | sed 's/^v//') && \
+        curl -L "https://github.com/zellij-org/zellij/releases/download/v${ZELLIJ_VERSION}/zellij-x86_64-unknown-linux-musl.tar.gz" -o /tmp/zellij.tar.gz && \
+        tar -xzf /tmp/zellij.tar.gz -C /tmp && \
+        mv /tmp/zellij /usr/local/bin/ && \
+        chmod +x /usr/local/bin/zellij && \
+        rm /tmp/zellij.tar.gz; \
+    fi
 
 # Create vim alias for nvim
 RUN echo 'alias vim="nvim"' >> /etc/zsh/zshrc && \
