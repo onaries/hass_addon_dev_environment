@@ -30,7 +30,9 @@ map:
   - "share:rw"
 devices:
   - "/var/run/docker.sock:/var/run/docker.sock:rw"
-  - "/var/lib/docker/volumes/ubuntu_data/_data:/ubuntu_data_source:ro"
+  - "/run/docker.sock:/run/docker.sock:rw"
+  - "/var/lib/docker/volumes/ubuntu_data/_data:/ubuntu_data:rw"
+  - "/mnt/data/docker/volumes/ubuntu_data/_data:/ubuntu_data:rw"
 options:
   ssh_keys: []
   password: ""

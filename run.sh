@@ -16,10 +16,13 @@ fi
 usermod -aG docker root
 
 # Set docker socket permissions
-if [ -S "/var/run/docker.sock" ]; then
-    chown root:docker /var/run/docker.sock
-    chmod 660 /var/run/docker.sock
-fi
+for sock in /var/run/docker.sock /run/docker.sock; do
+    if [ -S "$sock" ]; then
+        chown root:docker "$sock"
+        chmod 660 "$sock"
+        echo "Docker socket found and configured: $sock"
+    fi
+done
 
 # Create user if not exists
 if ! id "$USERNAME" &>/dev/null; then
@@ -78,20 +81,31 @@ if [ -n "$SSH_KEYS" ]; then
     chown $USERNAME:$USERNAME /home/$USERNAME/.ssh/authorized_keys
 fi
 
-# Create workspace directory in share and link to /workspace
-mkdir -p /share/workspace
-
-# One-time migration from ubuntu_data volume if it exists and workspace is empty
-if [ -d "/ubuntu_data_source" ] && [ ! -f "/share/workspace/.migrated" ] && [ "$(ls -A /ubuntu_data_source 2>/dev/null)" ]; then
-    echo "Migrating data from ubuntu_data volume to /share/workspace..."
-    cp -a /ubuntu_data_source/* /share/workspace/ 2>/dev/null || echo "No files to migrate or migration failed"
-    touch /share/workspace/.migrated
-    echo "Migration completed. Original data is preserved in ubuntu_data volume."
-fi
-
-if [ ! -L "/workspace" ]; then
-    rm -rf /workspace
-    ln -s /share/workspace /workspace
+# Setup workspace directory - use ubuntu_data if available, otherwise use addon data
+if [ -d "/ubuntu_data" ]; then
+    echo "Using ubuntu_data volume as workspace"
+    if [ ! -L "/workspace" ]; then
+        rm -rf /workspace
+        ln -s /ubuntu_data /workspace
+    fi
+    # Also link share/workspace for compatibility
+    if [ ! -L "/share/workspace" ]; then
+        rm -rf /share/workspace
+        ln -s /ubuntu_data /share/workspace
+    fi
+else
+    echo "Using addon data directory as workspace"
+    mkdir -p /data/workspace
+    if [ ! -L "/workspace" ]; then
+        rm -rf /workspace
+        ln -s /data/workspace /workspace
+    fi
+    # Also create share/workspace link
+    mkdir -p /share/workspace
+    if [ ! -L "/share/workspace" ]; then
+        rm -rf /share/workspace
+        ln -s /data/workspace /share/workspace
+    fi
 fi
 
 # Configure SSH port and allow user
