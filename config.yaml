@@ -29,6 +29,7 @@ map:
   - data:
       path: "/data"
       read_only: false
+  - "/var/run/docker.sock:/var/run/docker.sock:rw"
 options:
   ssh_keys: []
   password: ""

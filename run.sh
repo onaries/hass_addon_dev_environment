@@ -15,6 +15,9 @@ if ! getent group docker > /dev/null 2>&1; then
 fi
 usermod -aG docker root
 
+# Ensure /var/run directory exists
+mkdir -p /var/run
+
 # Set docker socket permissions and create symlink if needed
 DOCKER_SOCK=""
 for sock in /run/docker.sock /var/run/docker.sock; do
