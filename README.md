@@ -21,6 +21,15 @@ This add-on provides a full-featured development environment including:
 - **Docker Access**: Docker socket mounted for container operations
 - **File Access**: Home Assistant config, addons, and shared directories
 
+## Important Setup Requirements
+
+⚠️ **This addon requires Home Assistant Protection Mode to be disabled** due to its need for Docker API access and system-level permissions.
+
+1. Go to **Settings** → **Add-ons** → **Advanced**
+2. Disable **Protection mode**
+3. Restart Home Assistant
+4. Install and configure this addon
+
 ## Configuration
 
 ### Option: `ssh_keys`

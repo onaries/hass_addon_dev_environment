@@ -15,14 +15,35 @@ if ! getent group docker > /dev/null 2>&1; then
 fi
 usermod -aG docker root
 
-# Set docker socket permissions
-for sock in /var/run/docker.sock /run/docker.sock; do
+# Set docker socket permissions and create symlink if needed
+DOCKER_SOCK=""
+for sock in /run/docker.sock /var/run/docker.sock; do
     if [ -S "$sock" ]; then
         chown root:docker "$sock"
         chmod 660 "$sock"
         echo "Docker socket found and configured: $sock"
+        DOCKER_SOCK="$sock"
+        break
     fi
 done
+
+# Ensure both /var/run/docker.sock and /run/docker.sock exist for compatibility
+if [ -n "$DOCKER_SOCK" ]; then
+    if [ "$DOCKER_SOCK" = "/run/docker.sock" ] && [ ! -S "/var/run/docker.sock" ]; then
+        echo "Creating symlink: /var/run/docker.sock -> /run/docker.sock"
+        ln -sf /run/docker.sock /var/run/docker.sock
+    elif [ "$DOCKER_SOCK" = "/var/run/docker.sock" ] && [ ! -S "/run/docker.sock" ]; then
+        echo "Creating symlink: /run/docker.sock -> /var/run/docker.sock"
+        ln -sf /var/run/docker.sock /run/docker.sock
+    fi
+    
+    # Set DOCKER_HOST environment variable
+    echo "export DOCKER_HOST=unix://$DOCKER_SOCK" >> /etc/environment
+    echo "export DOCKER_HOST=unix://$DOCKER_SOCK" >> /root/.bashrc
+    echo "export DOCKER_HOST=unix://$DOCKER_SOCK" >> /root/.zshrc
+else
+    echo "Warning: No Docker socket found at /run/docker.sock or /var/run/docker.sock"
+fi
 
 # Create user if not exists
 if ! id "$USERNAME" &>/dev/null; then
@@ -54,8 +75,15 @@ if ! id "$USERNAME" &>/dev/null; then
     echo 'export NVM_DIR="/opt/nvm"' >> /home/$USERNAME/.zshrc
     echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> /home/$USERNAME/.zshrc
     echo '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"' >> /home/$USERNAME/.zshrc
+    
+    # Add Docker environment variable for user
+    if [ -n "$DOCKER_SOCK" ]; then
+        echo "export DOCKER_HOST=unix://$DOCKER_SOCK" >> /home/$USERNAME/.zshrc
+        echo "export DOCKER_HOST=unix://$DOCKER_SOCK" >> /home/$USERNAME/.bashrc
+    fi
+    
     chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
-    chown $USERNAME:$USERNAME /home/$USERNAME/.zshrc
+    chown $USERNAME:$USERNAME /home/$USERNAME/.zshrc /home/$USERNAME/.bashrc
 fi
 
 # Set user password if provided
@@ -81,20 +109,33 @@ if [ -n "$SSH_KEYS" ]; then
     chown $USERNAME:$USERNAME /home/$USERNAME/.ssh/authorized_keys
 fi
 
-# Setup workspace directory - use ubuntu_data if available, otherwise use addon data
-if [ -d "/ubuntu_data" ]; then
-    echo "Using ubuntu_data volume as workspace"
+# Setup workspace directory - find ubuntu_data volume with full_access
+UBUNTU_DATA_PATH=""
+for path in \
+    "/var/lib/docker/volumes/ubuntu_data/_data" \
+    "/mnt/data/docker/volumes/ubuntu_data/_data" \
+    "/host/var/lib/docker/volumes/ubuntu_data/_data" \
+    "/host/mnt/data/docker/volumes/ubuntu_data/_data"; do
+    if [ -d "$path" ]; then
+        UBUNTU_DATA_PATH="$path"
+        echo "Found ubuntu_data volume at: $path"
+        break
+    fi
+done
+
+if [ -n "$UBUNTU_DATA_PATH" ]; then
+    echo "Using ubuntu_data volume as workspace: $UBUNTU_DATA_PATH"
     if [ ! -L "/workspace" ]; then
         rm -rf /workspace
-        ln -s /ubuntu_data /workspace
+        ln -s "$UBUNTU_DATA_PATH" /workspace
     fi
     # Also link share/workspace for compatibility
     if [ ! -L "/share/workspace" ]; then
         rm -rf /share/workspace
-        ln -s /ubuntu_data /share/workspace
+        ln -s "$UBUNTU_DATA_PATH" /share/workspace
     fi
 else
-    echo "Using addon data directory as workspace"
+    echo "Ubuntu_data volume not found, using addon data directory as workspace"
     mkdir -p /data/workspace
     if [ ! -L "/workspace" ]; then
         rm -rf /workspace
