@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Neovim installation method: switched to tarball distribution on amd64 architecture for better performance and compatibility
+- AppImage installation retained as fallback for non-amd64 architectures
+
 ## [1.0.2] - 2025-08-25
 
 ### Added
