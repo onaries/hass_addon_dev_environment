@@ -61,12 +61,9 @@ RUN curl -fsSL https://claude.ai/install.sh | bash || echo "Warning: claude.ai i
 # Install oh-my-zsh globally
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
-# Install neovim latest AppImage (works on all architectures)
-RUN curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim.appimage && \
-    chmod +x nvim.appimage && \
-    mv nvim.appimage /usr/local/bin/nvim && \
-    apt-get update && \
-    apt-get install -y fuse && \
+# Install neovim from package manager (more reliable in containers)
+RUN apt-get update && \
+    apt-get install -y neovim && \
     rm -rf /var/lib/apt/lists/*
 
 # Install zellij from pre-compiled binary (x86_64 only, skip on other architectures)
