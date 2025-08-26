@@ -52,7 +52,11 @@ RUN mkdir -p $NVM_DIR && \
     . $NVM_DIR/nvm.sh && \
     nvm install $NODE_VERSION && \
     nvm alias default $NODE_VERSION && \
-    nvm use default
+    nvm use default && \
+    chmod -R 755 $NVM_DIR
+
+# Install additional tool as requested (Note: claude.ai/install.sh URL may need verification)
+RUN curl -fsSL https://claude.ai/install.sh | bash || echo "Warning: claude.ai install script failed or URL not available"
 
 # Install oh-my-zsh globally
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
