@@ -61,13 +61,21 @@ RUN curl -fsSL https://claude.ai/install.sh | bash || echo "Warning: claude.ai i
 # Install oh-my-zsh globally
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
-# Install neovim latest AppImage (works on all architectures)
-RUN curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim.appimage && \
-    chmod +x nvim.appimage && \
-    mv nvim.appimage /usr/local/bin/nvim && \
-    apt-get update && \
-    apt-get install -y fuse && \
-    rm -rf /var/lib/apt/lists/*
+# Install neovim from tarball (x86_64 only, fallback to AppImage on other architectures)
+RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
+        curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz && \
+        rm -rf /opt/nvim && \
+        tar -C /opt -xzf nvim-linux-x86_64.tar.gz && \
+        ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim && \
+        rm nvim-linux-x86_64.tar.gz; \
+    else \
+        curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim.appimage && \
+        chmod +x nvim.appimage && \
+        mv nvim.appimage /usr/local/bin/nvim && \
+        apt-get update && \
+        apt-get install -y fuse && \
+        rm -rf /var/lib/apt/lists/*; \
+    fi
 
 # Install zellij from pre-compiled binary (x86_64 only, skip on other architectures)
 RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
