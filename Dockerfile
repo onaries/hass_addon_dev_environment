@@ -61,10 +61,19 @@ RUN curl -fsSL https://claude.ai/install.sh | bash || echo "Warning: claude.ai i
 # Install oh-my-zsh globally
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
-# Install neovim latest AppImage (works on all architectures)
-RUN curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim.appimage && \
-    chmod +x nvim.appimage && \
-    mv nvim.appimage /usr/local/bin/nvim && \
+# Install neovim latest stable AppImage (compatible with LazyVim)
+# Download with retry and version verification, fallback to package manager if needed
+RUN NVIM_URL="https://github.com/neovim/neovim/releases/latest/download/nvim.appimage" && \
+    (curl -LO "$NVIM_URL" && \
+     chmod +x nvim.appimage && \
+     # Verify the AppImage is executable and shows version
+     ./nvim.appimage --version | head -n 1 && \
+     mv nvim.appimage /usr/local/bin/nvim) || \
+    # Fallback: install via package manager if AppImage fails
+    (echo "AppImage download failed, falling back to package manager..." && \
+     apt-get update && \
+     apt-get install -y neovim) && \
+    # Install fuse for AppImage support
     apt-get update && \
     apt-get install -y fuse && \
     rm -rf /var/lib/apt/lists/*

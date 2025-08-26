@@ -63,7 +63,26 @@ if ! id "$USERNAME" &>/dev/null; then
     # Install oh-my-zsh for user
     sudo -u $USERNAME sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
     
-    # Install LazyVim for user
+    # Install LazyVim for user (ensure Neovim version compatibility)
+    echo "Checking Neovim version for LazyVim compatibility..."
+    if command -v nvim >/dev/null 2>&1; then
+        NVIM_VERSION=$(nvim --version 2>/dev/null | head -n 1 | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' || echo "unknown")
+        echo "Neovim version: $NVIM_VERSION"
+        
+        # Check for minimum version (0.9.0) for LazyVim compatibility
+        if echo "$NVIM_VERSION" | grep -qE '^v0\.[0-8]\.'; then
+            echo "Warning: Neovim version $NVIM_VERSION may not be fully compatible with LazyVim"
+            echo "LazyVim recommends Neovim >= 0.9.0 for best compatibility"
+        elif echo "$NVIM_VERSION" | grep -qE '^v(0\.9\.|0\.[1-9][0-9]\.|[1-9])'; then
+            echo "✓ Neovim version $NVIM_VERSION is compatible with LazyVim"
+        else
+            echo "Warning: Could not determine Neovim version compatibility"
+        fi
+    else
+        echo "Warning: Neovim not found in PATH"
+    fi
+    
+    echo "Installing LazyVim starter configuration..."
     sudo -u $USERNAME git clone https://github.com/LazyVim/starter /home/$USERNAME/.config/nvim
     sudo -u $USERNAME rm -rf /home/$USERNAME/.config/nvim/.git
     

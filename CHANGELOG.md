@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Enhanced Neovim installation with version verification for LazyVim compatibility
+- Added Neovim version checking during LazyVim installation to ensure compatibility
+
 ## [1.0.2] - 2025-08-25
 
 ### Added
