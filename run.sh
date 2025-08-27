@@ -99,6 +99,7 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     echo 'export PATH="$HOME/.local/bin:$PATH"' >> /home/$USERNAME/.zshrc
     echo 'export PATH="$HOME/.local/bin:$PATH"' >> /home/$USERNAME/.bashrc
     
+    
     # Install Docker CLI for user (if not already available)
     if ! command -v docker >/dev/null 2>&1; then
         echo "Installing Docker CLI..."
@@ -109,6 +110,26 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     
     chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
     chown $USERNAME:$USERNAME /home/$USERNAME/.zshrc /home/$USERNAME/.bashrc
+fi
+
+# Setup Claude CLI persistent storage for all users
+mkdir -p /data/claude_config
+chown $USERNAME:$USERNAME /data/claude_config
+
+# Create symlinks for Claude CLI configuration
+if [ ! -L "/home/$USERNAME/.claude" ]; then
+    if [ -d "/home/$USERNAME/.claude" ]; then
+        sudo -u $USERNAME cp -r /home/$USERNAME/.claude/* /data/claude_config/ 2>/dev/null || true
+        rm -rf /home/$USERNAME/.claude
+    fi
+    sudo -u $USERNAME ln -sf /data/claude_config /home/$USERNAME/.claude
+fi
+
+if [ ! -L "/home/$USERNAME/.claude.json" ] && [ -f "/home/$USERNAME/.claude.json" ]; then
+    sudo -u $USERNAME mv /home/$USERNAME/.claude.json /data/claude_config/
+fi
+if [ ! -L "/home/$USERNAME/.claude.json" ]; then
+    sudo -u $USERNAME ln -sf /data/claude_config/.claude.json /home/$USERNAME/.claude.json
 fi
 
 # Set user password if provided
@@ -178,8 +199,16 @@ fi
 sed -i "s/#Port 22/Port $SSH_PORT/" /etc/ssh/sshd_config
 sed -i "s/AllowUsers root/AllowUsers root $USERNAME/" /etc/ssh/sshd_config
 
-# Generate SSH host keys if they don't exist
-ssh-keygen -A
+# Generate SSH host keys if they don't exist - persist in data directory
+if [ ! -d "/data/ssh_host_keys" ]; then
+    mkdir -p /data/ssh_host_keys
+    ssh-keygen -A
+    # Move generated keys to persistent storage
+    mv /etc/ssh/ssh_host_* /data/ssh_host_keys/
+else
+    # Restore keys from persistent storage
+    cp /data/ssh_host_keys/ssh_host_* /etc/ssh/
+fi
 
 # Start SSH daemon
 echo "Starting SSH daemon on port $SSH_PORT..."
