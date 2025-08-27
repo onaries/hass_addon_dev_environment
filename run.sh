@@ -55,6 +55,9 @@ fi
 # Ensure user is in docker, sudo, and _ssh groups (for both new and existing users)
 usermod -aG sudo,docker,_ssh "$USERNAME"
 
+# Give user access to nvm directory
+chown -R $USERNAME:$USERNAME /opt/nvm
+
 # Configure passwordless sudo for user
 echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME
 chmod 440 /etc/sudoers.d/$USERNAME
@@ -91,6 +94,17 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
 
     # Install Node.js LTS for user
     sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm install --lts && nvm use --lts && nvm alias default lts/*'
+    
+    # Setup npm global packages persistent storage
+    mkdir -p /data/npm_global
+    chown $USERNAME:$USERNAME /data/npm_global
+    
+    # Configure npm to use persistent global directory
+    sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && npm config set prefix /data/npm_global'
+    
+    # Add npm global bin to PATH
+    echo 'export PATH="/data/npm_global/bin:$PATH"' >> /home/$USERNAME/.zshrc
+    echo 'export PATH="/data/npm_global/bin:$PATH"' >> /home/$USERNAME/.bashrc
 
     # Install Claude CLI for user
     sudo -u $USERNAME bash -c 'curl -fsSL https://claude.ai/install.sh | bash'
