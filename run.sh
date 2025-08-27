@@ -50,11 +50,17 @@ fi
 if ! id "$USERNAME" &>/dev/null; then
     echo "Creating user: $USERNAME"
     useradd -m -s /bin/zsh "$USERNAME"
-    usermod -aG sudo,docker "$USERNAME"
-    
-    # Configure passwordless sudo for user
-    echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME
-    chmod 440 /etc/sudoers.d/$USERNAME
+fi
+
+# Ensure user is in docker, sudo, and _ssh groups (for both new and existing users)
+usermod -aG sudo,docker,_ssh "$USERNAME"
+
+# Configure passwordless sudo for user
+echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME
+chmod 440 /etc/sudoers.d/$USERNAME
+
+# Setup user environment (only if user was just created)
+if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     
     # Create SSH directory for user
     mkdir -p /home/$USERNAME/.ssh
@@ -88,6 +94,14 @@ if ! id "$USERNAME" &>/dev/null; then
     
     # Install Claude CLI for user
     sudo -u $USERNAME bash -c 'curl -fsSL https://claude.ai/install.sh | bash'
+    
+    # Install Docker CLI for user (if not already available)
+    if ! command -v docker >/dev/null 2>&1; then
+        echo "Installing Docker CLI..."
+        curl -fsSL https://get.docker.com -o get-docker.sh
+        sh get-docker.sh
+        rm -f get-docker.sh
+    fi
     
     chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
     chown $USERNAME:$USERNAME /home/$USERNAME/.zshrc /home/$USERNAME/.bashrc
