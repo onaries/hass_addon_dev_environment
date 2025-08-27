@@ -82,6 +82,12 @@ if ! id "$USERNAME" &>/dev/null; then
         echo "export DOCKER_HOST=unix://$DOCKER_SOCK" >> /home/$USERNAME/.bashrc
     fi
     
+    # Install Node.js LTS for user
+    sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm install --lts && nvm use --lts && nvm alias default lts/*'
+    
+    # Install Claude CLI for user
+    sudo -u $USERNAME bash -c 'curl -fsSL https://claude.ai/install.sh | bash'
+    
     chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
     chown $USERNAME:$USERNAME /home/$USERNAME/.zshrc /home/$USERNAME/.bashrc
 fi
