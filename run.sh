@@ -19,8 +19,9 @@ usermod -aG docker root
 DOCKER_SOCK=""
 for sock in /run/docker.sock /var/run/docker.sock; do
     if [ -S "$sock" ]; then
-        chown root:docker "$sock"
-        chmod 660 "$sock"
+        # Try to change ownership, but don't fail if it's read-only
+        chown root:docker "$sock" 2>/dev/null || echo "Warning: Cannot change ownership of $sock (read-only filesystem)"
+        chmod 660 "$sock" 2>/dev/null || echo "Warning: Cannot change permissions of $sock (read-only filesystem)"
         echo "Docker socket found and configured: $sock"
         DOCKER_SOCK="$sock"
         break
