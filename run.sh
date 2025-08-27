@@ -95,6 +95,10 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     # Install Claude CLI for user
     sudo -u $USERNAME bash -c 'curl -fsSL https://claude.ai/install.sh | bash'
     
+    # Add Claude CLI to PATH for user
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> /home/$USERNAME/.zshrc
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> /home/$USERNAME/.bashrc
+    
     # Install Docker CLI for user (if not already available)
     if ! command -v docker >/dev/null 2>&1; then
         echo "Installing Docker CLI..."
