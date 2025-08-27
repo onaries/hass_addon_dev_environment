@@ -119,6 +119,19 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     chown $USERNAME:$USERNAME /home/$USERNAME/.zshrc /home/$USERNAME/.bashrc
 fi
 
+# Setup user .config persistent storage
+mkdir -p /data/user_config
+chown $USERNAME:$USERNAME /data/user_config
+
+# Create symlink for .config directory
+if [ ! -L "/home/$USERNAME/.config" ]; then
+    if [ -d "/home/$USERNAME/.config" ]; then
+        sudo -u $USERNAME cp -r /home/$USERNAME/.config/* /data/user_config/ 2>/dev/null || true
+        rm -rf /home/$USERNAME/.config
+    fi
+    sudo -u $USERNAME ln -sf /data/user_config /home/$USERNAME/.config
+fi
+
 # Setup Claude CLI persistent storage for all users
 mkdir -p /data/claude_config
 chown $USERNAME:$USERNAME /data/claude_config
