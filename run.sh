@@ -99,6 +99,13 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     echo 'export PATH="$HOME/.local/bin:$PATH"' >> /home/$USERNAME/.zshrc
     echo 'export PATH="$HOME/.local/bin:$PATH"' >> /home/$USERNAME/.bashrc
     
+    # Add Claude CLI alias
+    echo 'alias ccc="claude --dangerously-skip-permissions"' >> /home/$USERNAME/.zshrc
+    echo 'alias ccc="claude --dangerously-skip-permissions"' >> /home/$USERNAME/.bashrc
+    
+    # Install uv for user
+    sudo -u $USERNAME bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh'
+    
     
     # Install Docker CLI for user (if not already available)
     if ! command -v docker >/dev/null 2>&1; then
