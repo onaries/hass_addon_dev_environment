@@ -217,6 +217,21 @@ else
     cp /data/ssh_host_keys/ssh_host_* /etc/ssh/
 fi
 
+# Setup user SSH keys persistent storage
+mkdir -p /data/user_ssh_keys
+chown $USERNAME:$USERNAME /data/user_ssh_keys
+
+# Generate or restore user SSH key
+if [ ! -f "/data/user_ssh_keys/id_ed25519" ]; then
+    sudo -u $USERNAME ssh-keygen -t ed25519 -C "$USERNAME@hass-addon-dev" -f /data/user_ssh_keys/id_ed25519 -N ""
+    echo "Generated SSH key for user $USERNAME:"
+    cat /data/user_ssh_keys/id_ed25519.pub
+fi
+
+# Create symlinks for user SSH keys
+sudo -u $USERNAME ln -sf /data/user_ssh_keys/id_ed25519 /home/$USERNAME/.ssh/id_ed25519
+sudo -u $USERNAME ln -sf /data/user_ssh_keys/id_ed25519.pub /home/$USERNAME/.ssh/id_ed25519.pub
+
 # Start SSH daemon
 echo "Starting SSH daemon on port $SSH_PORT..."
 /usr/sbin/sshd -D &
