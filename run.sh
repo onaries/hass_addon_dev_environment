@@ -119,6 +119,14 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
 
     # Install uv for user
     sudo -u $USERNAME bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh'
+    
+    # Install GitUI
+    echo "Installing GitUI..."
+    curl -L https://github.com/gitui-org/gitui/releases/download/v0.27.0/gitui-linux-x86_64.tar.gz -o /tmp/gitui.tar.gz
+    tar -xzf /tmp/gitui.tar.gz -C /tmp
+    mv /tmp/gitui /usr/local/bin/
+    chmod +x /usr/local/bin/gitui
+    rm -f /tmp/gitui.tar.gz
 
 
     # Install Docker CLI for user (if not already available)
