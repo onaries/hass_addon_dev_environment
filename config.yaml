@@ -1,5 +1,5 @@
 name: Python Development Environment
-version: "1.0.2"
+version: "1.0.3"
 slug: python_dev_env
 description: "Python 3.13 development environment with SSH, zsh, neovim, and modern tools"
 url: "https://github.com/yourusername/hass-python-dev-addon"

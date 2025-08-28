@@ -146,6 +146,19 @@ if [ ! -L "/home/$USERNAME/.config" ]; then
     sudo -u $USERNAME ln -sf /data/user_config /home/$USERNAME/.config
 fi
 
+# Setup user .local persistent storage
+mkdir -p /data/user_local
+chown $USERNAME:$USERNAME /data/user_local
+
+# Create symlink for .local directory
+if [ ! -L "/home/$USERNAME/.local" ]; then
+    if [ -d "/home/$USERNAME/.local" ]; then
+        sudo -u $USERNAME cp -r /home/$USERNAME/.local/* /data/user_local/ 2>/dev/null || true
+        rm -rf /home/$USERNAME/.local
+    fi
+    sudo -u $USERNAME ln -sf /data/user_local /home/$USERNAME/.local
+fi
+
 # Setup Claude CLI persistent storage for all users
 mkdir -p /data/claude_config
 chown $USERNAME:$USERNAME /data/claude_config
