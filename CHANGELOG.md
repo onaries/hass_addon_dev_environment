@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4] - 2025-08-28
+
+### Added
+- GitUI 터미널 Git 인터페이스 도구 (v0.27.0)
+- Just command runner - 프로젝트 작업 자동화 도구
+- Rust 프로그래밍 언어 및 Cargo 패키지 매니저
+- Go 프로그래밍 언어 (v1.21.5) 및 Go 워크스페이스
+
+### Changed
+- Rust 툴체인을 `/data/rust_cargo`에 영구 저장 (`RUSTUP_HOME`, `CARGO_HOME`)
+- Go 워크스페이스를 `/data/go_workspace`에 영구 저장 (`GOPATH`)
+- 사용자 `.local` 디렉토리를 `/data/user_local`에 영구 저장
+- npm global 패키지를 `/data/npm_global`에 영구 저장
+- `/opt/nvm` 디렉토리에 사용자 소유권 부여
+
+### Developer Experience
+- 다중 프로그래밍 언어 지원 (Python, Node.js, Rust, Go)
+- 터미널 기반 Git 관리 (`gitui` 명령어)
+- 작업 자동화 (`just` 명령어로 Justfile 실행)
+- 모든 언어별 패키지와 툴체인이 재빌드 시에도 유지
+- Cargo crates, Go modules, pip packages 영구 저장
+
 ## [1.0.3] - 2025-08-27
 
 ### Added

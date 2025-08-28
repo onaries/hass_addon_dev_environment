@@ -127,6 +127,46 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     mv /tmp/gitui /usr/local/bin/
     chmod +x /usr/local/bin/gitui
     rm -f /tmp/gitui.tar.gz
+    
+    # Install Just command runner
+    echo "Installing Just..."
+    wget -qO - 'https://proget.makedeb.org/debian-feeds/prebuilt-mpr.pub' | gpg --dearmor | tee /usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg 1> /dev/null
+    echo "deb [arch=all,$(dpkg --print-architecture) signed-by=/usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg] https://proget.makedeb.org prebuilt-mpr $(lsb_release -cs)" | tee /etc/apt/sources.list.d/prebuilt-mpr.list
+    apt update
+    apt install -y just
+    
+    # Install Rust for user with persistent storage
+    echo "Installing Rust..."
+    mkdir -p /data/rust_cargo
+    chown $USERNAME:$USERNAME /data/rust_cargo
+    
+    # Set RUSTUP_HOME and CARGO_HOME to persistent storage
+    echo 'export RUSTUP_HOME="/data/rust_cargo/rustup"' >> /home/$USERNAME/.zshrc
+    echo 'export CARGO_HOME="/data/rust_cargo/cargo"' >> /home/$USERNAME/.zshrc
+    echo 'export PATH="/data/rust_cargo/cargo/bin:$PATH"' >> /home/$USERNAME/.zshrc
+    echo 'export RUSTUP_HOME="/data/rust_cargo/rustup"' >> /home/$USERNAME/.bashrc
+    echo 'export CARGO_HOME="/data/rust_cargo/cargo"' >> /home/$USERNAME/.bashrc
+    echo 'export PATH="/data/rust_cargo/cargo/bin:$PATH"' >> /home/$USERNAME/.bashrc
+    
+    sudo -u $USERNAME bash -c 'export RUSTUP_HOME="/data/rust_cargo/rustup" CARGO_HOME="/data/rust_cargo/cargo" && curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
+    
+    # Install Go with persistent GOPATH
+    echo "Installing Go..."
+    GO_VERSION="1.21.5"
+    wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -O /tmp/go.tar.gz
+    tar -C /usr/local -xzf /tmp/go.tar.gz
+    rm -f /tmp/go.tar.gz
+    
+    # Setup persistent GOPATH
+    mkdir -p /data/go_workspace
+    chown $USERNAME:$USERNAME /data/go_workspace
+    
+    echo 'export PATH="/usr/local/go/bin:$PATH"' >> /home/$USERNAME/.zshrc
+    echo 'export GOPATH="/data/go_workspace"' >> /home/$USERNAME/.zshrc
+    echo 'export PATH="/data/go_workspace/bin:$PATH"' >> /home/$USERNAME/.zshrc
+    echo 'export PATH="/usr/local/go/bin:$PATH"' >> /home/$USERNAME/.bashrc
+    echo 'export GOPATH="/data/go_workspace"' >> /home/$USERNAME/.bashrc
+    echo 'export PATH="/data/go_workspace/bin:$PATH"' >> /home/$USERNAME/.bashrc
 
 
     # Install Docker CLI for user (if not already available)
