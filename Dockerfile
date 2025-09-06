@@ -29,7 +29,8 @@ RUN apt-get update && \
         tmux \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /var/run/sshd \
-    && mkdir -p /run/sshd
+    && mkdir -p /run/sshd \
+    && mkdir -p /var/run
 
 # Install Docker CLI and Docker Compose
 RUN curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
