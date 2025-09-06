@@ -162,4 +162,4 @@ You could [open an issue here][issue] on GitHub.
 [armhf-shield]: https://img.shields.io/badge/armhf-yes-green.svg
 [armv7-shield]: https://img.shields.io/badge/armv7-yes-green.svg
 [i386-shield]: https://img.shields.io/badge/i386-yes-green.svg
-[issue]: https://github.com/yourusername/hass-python-dev-addon/issues
+[issue]: https://github.com/onaries/hass_addon_dev_environment/issues
