@@ -117,6 +117,10 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     echo 'alias ccc="claude --dangerously-skip-permissions"' >> /home/$USERNAME/.zshrc
     echo 'alias ccc="claude --dangerously-skip-permissions"' >> /home/$USERNAME/.bashrc
 
+    # Add qwen-code CLI to PATH for user
+    echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> /home/$USERNAME/.zshrc
+    echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> /home/$USERNAME/.bashrc
+
     # Install uv for user
     sudo -u $USERNAME bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh'
     
@@ -211,6 +215,10 @@ fi
 mkdir -p /data/claude_config
 chown $USERNAME:$USERNAME /data/claude_config
 
+# Setup .qwen persistent storage for all users
+mkdir -p /data/qwen_config
+chown $USERNAME:$USERNAME /data/qwen_config
+
 # Create symlinks for Claude CLI configuration
 if [ ! -L "/home/$USERNAME/.claude" ]; then
     if [ -d "/home/$USERNAME/.claude" ]; then
@@ -225,6 +233,15 @@ if [ ! -L "/home/$USERNAME/.claude.json" ] && [ -f "/home/$USERNAME/.claude.json
 fi
 if [ ! -L "/home/$USERNAME/.claude.json" ]; then
     sudo -u $USERNAME ln -sf /data/claude_config/.claude.json /home/$USERNAME/.claude.json
+fi
+
+# Create symlinks for .qwen configuration
+if [ ! -L "/home/$USERNAME/.qwen" ]; then
+    if [ -d "/home/$USERNAME/.qwen" ]; then
+        sudo -u $USERNAME cp -r /home/$USERNAME/.qwen/* /data/qwen_config/ 2>/dev/null || true
+        rm -rf /home/$USERNAME/.qwen
+    fi
+    sudo -u $USERNAME ln -sf /data/qwen_config /home/$USERNAME/.qwen
 fi
 
 # Set user password if provided

@@ -58,6 +58,9 @@ RUN mkdir -p $NVM_DIR && \
 # Install additional tool as requested (Note: claude.ai/install.sh URL may need verification)
 RUN curl -fsSL https://claude.ai/install.sh | bash || echo "Warning: claude.ai install script failed or URL not available"
 
+# Install qwen-code CLI tool
+RUN npm install -g @qwen-code/qwen-code || echo "Warning: Failed to install qwen-code CLI tool"
+
 # Install oh-my-zsh globally
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
