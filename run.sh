@@ -100,7 +100,15 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     chown $USERNAME:$USERNAME /data/npm_global
     
     # Configure npm to use persistent global directory
-    sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && npm config set prefix /data/npm_global'
+    # Handle npm configuration in a way that's compatible with nvm
+    sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default && npm config delete prefix 2>/dev/null || true'
+    
+    # Set up npm global directory without conflicting with nvm
+    mkdir -p /data/npm_global
+    chown $USERNAME:$USERNAME /data/npm_global
+    
+    # Configure npm to use persistent global directory in a nvm-compatible way
+    sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default && npm config set prefix /data/npm_global'
     
     # Add npm global bin to PATH
     echo 'export PATH="/data/npm_global/bin:$PATH"' >> /home/$USERNAME/.zshrc
@@ -120,6 +128,48 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     # Add qwen-code CLI to PATH for user
     echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> /home/$USERNAME/.zshrc
     echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> /home/$USERNAME/.bashrc
+    
+    # Add a function to automatically fix nvm/npm conflicts
+    echo 'fix_nvm_npm_conflict() {' >> /home/$USERNAME/.zshrc
+    echo '  if [[ -f "$HOME/.npmrc" ]]; then' >> /home/$USERNAME/.zshrc
+    echo '    local prefix=$(npm config get prefix 2>/dev/null)' >> /home/$USERNAME/.zshrc
+    echo '    if [[ -n "$prefix" && "$prefix" != "undefined" ]]; then' >> /home/$USERNAME/.zshrc
+    echo '      source /opt/nvm/nvm.sh 2>/dev/null' >> /home/$USERNAME/.zshrc
+    echo '      nvm use --delete-prefix $(node -v 2>/dev/null || nvm current) --silent 2>/dev/null || true' >> /home/$USERNAME/.zshrc
+    echo '    fi' >> /home/$USERNAME/.zshrc
+    echo '  fi' >> /home/$USERNAME/.zshrc
+    echo '}' >> /home/$USERNAME/.zshrc
+    echo '' >> /home/$USERNAME/.zshrc
+    echo '# Automatically fix nvm/npm conflicts on shell start' >> /home/$USERNAME/.zshrc
+    echo 'fix_nvm_npm_conflict' >> /home/$USERNAME/.zshrc
+    
+    # Same for bash
+    echo 'fix_nvm_npm_conflict() {' >> /home/$USERNAME/.bashrc
+    echo '  if [[ -f "$HOME/.npmrc" ]]; then' >> /home/$USERNAME/.bashrc
+    echo '    local prefix=$(npm config get prefix 2>/dev/null)' >> /home/$USERNAME/.bashrc
+    echo '    if [[ -n "$prefix" && "$prefix" != "undefined" ]]; then' >> /home/$USERNAME/.bashrc
+    echo '      source /opt/nvm/nvm.sh 2>/dev/null' >> /home/$USERNAME/.bashrc
+    echo '      nvm use --delete-prefix $(node -v 2>/dev/null || nvm current) --silent 2>/dev/null || true' >> /home/$USERNAME/.bashrc
+    echo '    fi' >> /home/$USERNAME/.bashrc
+    echo '  fi' >> /home/$USERNAME/.bashrc
+    echo '}' >> /home/$USERNAME/.bashrc
+    echo '' >> /home/$USERNAME/.bashrc
+    echo '# Automatically fix nvm/npm conflicts on shell start' >> /home/$USERNAME/.bashrc
+    echo 'fix_nvm_npm_conflict' >> /home/$USERNAME/.bashrc
+    
+    # Add a function to automatically fix nvm/npm conflicts
+    echo 'fix_nvm_npm_conflict() {' >> /home/$USERNAME/.zshrc
+    echo '  if [[ -f "$HOME/.npmrc" ]]; then' >> /home/$USERNAME/.zshrc
+    echo '    local prefix=$(npm config get prefix 2>/dev/null)' >> /home/$USERNAME/.zshrc
+    echo '    if [[ -n "$prefix" && "$prefix" != "undefined" ]]; then' >> /home/$USERNAME/.zshrc
+    echo '      source /opt/nvm/nvm.sh 2>/dev/null' >> /home/$USERNAME/.zshrc
+    echo '      nvm use --delete-prefix $(node -v 2>/dev/null || nvm current) --silent 2>/dev/null || true' >> /home/$USERNAME/.zshrc
+    echo '    fi' >> /home/$USERNAME/.zshrc
+    echo '  fi' >> /home/$USERNAME/.zshrc
+    echo '}' >> /home/$USERNAME/.zshrc
+    echo '' >> /home/$USERNAME/.zshrc
+    echo '# Automatically fix nvm/npm conflicts on shell start' >> /home/$USERNAME/.zshrc
+    echo 'fix_nvm_npm_conflict' >> /home/$USERNAME/.zshrc
 
     # Install uv for user
     sudo -u $USERNAME bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh'
