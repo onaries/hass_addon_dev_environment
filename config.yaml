@@ -35,6 +35,8 @@ options:
   ssh_port: 2322
   username: "developer"
   user_password: ""
+  git_name: ""
+  git_email: ""
 schema:
   ssh_keys:
     - str?
@@ -42,3 +44,5 @@ schema:
   ssh_port: int(1,65535)?
   username: str?
   user_password: str?
+  git_name: str?
+  git_email: str?

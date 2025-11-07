@@ -14,6 +14,36 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
 }
 
+configure_git_identity() {
+    local target_user=$1
+    local label=$2
+
+    if [ -z "$GIT_NAME" ] && [ -z "$GIT_EMAIL" ]; then
+        return 0
+    fi
+
+    local cmd_prefix=()
+    if [ "$target_user" != "root" ]; then
+        cmd_prefix=(sudo -u "$target_user")
+    fi
+
+    if [ -n "$GIT_NAME" ]; then
+        if ! "${cmd_prefix[@]}" git config --global user.name "$GIT_NAME" 2>/dev/null; then
+            log "Warning: Failed to set git user.name for $label"
+        else
+            log "Configured git user.name for $label"
+        fi
+    fi
+
+    if [ -n "$GIT_EMAIL" ]; then
+        if ! "${cmd_prefix[@]}" git config --global user.email "$GIT_EMAIL" 2>/dev/null; then
+            log "Warning: Failed to set git user.email for $label"
+        else
+            log "Configured git user.email for $label"
+        fi
+    fi
+}
+
 log "Starting addon initialization..."
 
 # Get SSH port from config (default: 2322)
@@ -21,6 +51,10 @@ SSH_PORT=$(jq -r '.ssh_port // 2322' $CONFIG_PATH)
 
 # Get username from config (default: developer)
 USERNAME=$(jq -r '.username // "developer"' $CONFIG_PATH)
+
+# Optional git identity settings
+GIT_NAME=$(jq -r '.git_name // ""' $CONFIG_PATH)
+GIT_EMAIL=$(jq -r '.git_email // ""' $CONFIG_PATH)
 
 log "Configuring Docker access..."
 
@@ -294,6 +328,14 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     set -e
     FAIL_OK=0
     log "User environment setup completed"
+fi
+
+if [ -n "$GIT_NAME" ] || [ -n "$GIT_EMAIL" ]; then
+    log "Applying configured git identity..."
+    configure_git_identity "$USERNAME" "$USERNAME user"
+    configure_git_identity "root" "root user"
+else
+    log "Git identity options not provided; skipping git config"
 fi
 
 log "Configuring CLIProxyAPI service..."
