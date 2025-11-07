@@ -574,10 +574,13 @@ if [ ! -d "/data/ssh_host_keys" ]; then
     ssh-keygen -A
     # Move generated keys to persistent storage
     mv /etc/ssh/ssh_host_* /data/ssh_host_keys/
+    cp /data/ssh_host_keys/ssh_host_* /etc/ssh/
 else
     # Restore keys from persistent storage
     cp /data/ssh_host_keys/ssh_host_* /etc/ssh/
 fi
+
+chmod 600 /etc/ssh/ssh_host_* 2>/dev/null || true
 
 # Setup user SSH keys persistent storage
 mkdir -p /data/user_ssh_keys
