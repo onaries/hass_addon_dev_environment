@@ -1,7 +1,15 @@
 #!/bin/bash
+# Exit on error for critical sections, but allow some failures
 set -e
 
 CONFIG_PATH=/data/options.json
+
+# Logging function
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+}
+
+log "Starting addon initialization..."
 
 # Get SSH port from config (default: 2322)
 SSH_PORT=$(jq -r '.ssh_port // 2322' $CONFIG_PATH)
@@ -9,20 +17,23 @@ SSH_PORT=$(jq -r '.ssh_port // 2322' $CONFIG_PATH)
 # Get username from config (default: developer)
 USERNAME=$(jq -r '.username // "developer"' $CONFIG_PATH)
 
+log "Configuring Docker access..."
+
 # Create docker group if not exists and add root to docker group
 if ! getent group docker > /dev/null 2>&1; then
-    groupadd docker
+    groupadd docker || log "Warning: Failed to create docker group"
 fi
-usermod -aG docker root
+usermod -aG docker root 2>/dev/null || log "Warning: Failed to add root to docker group"
 
 # Set docker socket permissions and create symlink if needed
+log "Searching for Docker socket..."
 DOCKER_SOCK=""
 for sock in /run/docker.sock /var/run/docker.sock; do
     if [ -S "$sock" ]; then
         # Try to change ownership, but don't fail if it's read-only
-        chown root:docker "$sock" 2>/dev/null || echo "Warning: Cannot change ownership of $sock (read-only filesystem)"
-        chmod 660 "$sock" 2>/dev/null || echo "Warning: Cannot change permissions of $sock (read-only filesystem)"
-        echo "Docker socket found and configured: $sock"
+        chown root:docker "$sock" 2>/dev/null || log "Warning: Cannot change ownership of $sock (read-only filesystem)"
+        chmod 660 "$sock" 2>/dev/null || log "Warning: Cannot change permissions of $sock (read-only filesystem)"
+        log "Docker socket found and configured: $sock"
         DOCKER_SOCK="$sock"
         break
     fi
@@ -31,10 +42,10 @@ done
 # Ensure both /var/run/docker.sock and /run/docker.sock exist for compatibility
 if [ -n "$DOCKER_SOCK" ]; then
     if [ "$DOCKER_SOCK" = "/run/docker.sock" ] && [ ! -S "/var/run/docker.sock" ]; then
-        echo "Creating symlink: /var/run/docker.sock -> /run/docker.sock"
+        log "Creating symlink: /var/run/docker.sock -> /run/docker.sock"
         ln -sf /run/docker.sock /var/run/docker.sock
     elif [ "$DOCKER_SOCK" = "/var/run/docker.sock" ] && [ ! -S "/run/docker.sock" ]; then
-        echo "Creating symlink: /run/docker.sock -> /var/run/docker.sock"
+        log "Creating symlink: /run/docker.sock -> /var/run/docker.sock"
         ln -sf /var/run/docker.sock /run/docker.sock
     fi
 
@@ -42,21 +53,25 @@ if [ -n "$DOCKER_SOCK" ]; then
     echo "export DOCKER_HOST=unix://$DOCKER_SOCK" >> /etc/environment
     echo "export DOCKER_HOST=unix://$DOCKER_SOCK" >> /root/.bashrc
     echo "export DOCKER_HOST=unix://$DOCKER_SOCK" >> /root/.zshrc
+    log "DOCKER_HOST environment variable set to unix://$DOCKER_SOCK"
 else
-    echo "Warning: No Docker socket found at /run/docker.sock or /var/run/docker.sock"
+    log "Warning: No Docker socket found at /run/docker.sock or /var/run/docker.sock"
 fi
 
+log "Configuring user account: $USERNAME"
 # Create user if not exists
 if ! id "$USERNAME" &>/dev/null; then
-    echo "Creating user: $USERNAME"
+    log "Creating user: $USERNAME"
     useradd -m -s /bin/zsh "$USERNAME"
+else
+    log "User $USERNAME already exists"
 fi
 
 # Ensure user is in docker, sudo, and _ssh groups (for both new and existing users)
-usermod -aG sudo,docker,_ssh "$USERNAME"
+usermod -aG sudo,docker,_ssh "$USERNAME" 2>/dev/null || log "Warning: Failed to add user to groups"
 
 # Give user access to nvm directory
-chown -R $USERNAME:$USERNAME /opt/nvm
+chown -R $USERNAME:$USERNAME /opt/nvm 2>/dev/null || log "Warning: Failed to set nvm directory ownership"
 
 # Configure passwordless sudo for user
 echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME
@@ -64,6 +79,10 @@ chmod 440 /etc/sudoers.d/$USERNAME
 
 # Setup user environment (only if user was just created)
 if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
+    log "Setting up user environment for $USERNAME (this may take a while)..."
+
+    # Temporarily disable exit on error for non-critical setup
+    set +e
 
     # Create SSH directory for user
     mkdir -p /home/$USERNAME/.ssh
@@ -71,9 +90,11 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     chown $USERNAME:$USERNAME /home/$USERNAME/.ssh
 
     # Install oh-my-zsh for user
+    log "Installing oh-my-zsh for user..."
     sudo -u $USERNAME sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
     # Install LazyVim for user
+    log "Installing LazyVim for user..."
     sudo -u $USERNAME git clone https://github.com/LazyVim/starter /home/$USERNAME/.config/nvim
     sudo -u $USERNAME rm -rf /home/$USERNAME/.config/nvim/.git
 
@@ -93,28 +114,31 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     fi
 
     # Install Node.js LTS for user
+    log "Installing Node.js LTS for user..."
     sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm install --lts && nvm use --lts && nvm alias default lts/*'
-    
+
     # Setup npm global packages persistent storage
+    log "Configuring npm global packages storage..."
     mkdir -p /data/npm_global
     chown $USERNAME:$USERNAME /data/npm_global
-    
+
     # Configure npm to use persistent global directory
     # Handle npm configuration in a way that's compatible with nvm
     sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default && npm config delete prefix 2>/dev/null || true'
-    
+
     # Set up npm global directory without conflicting with nvm
     mkdir -p /data/npm_global
     chown $USERNAME:$USERNAME /data/npm_global
-    
+
     # Configure npm to use persistent global directory in a nvm-compatible way
     sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default && npm config set prefix /data/npm_global'
-    
+
     # Add npm global bin to PATH
     echo 'export PATH="/data/npm_global/bin:$PATH"' >> /home/$USERNAME/.zshrc
     echo 'export PATH="/data/npm_global/bin:$PATH"' >> /home/$USERNAME/.bashrc
 
     # Install Claude CLI for user
+    log "Installing Claude CLI for user..."
     sudo -u $USERNAME bash -c 'curl -fsSL https://claude.ai/install.sh | bash'
 
     # Add Claude CLI to PATH for user
@@ -130,12 +154,15 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> /home/$USERNAME/.bashrc
 
     # Install Codex CLI for user
+    log "Installing Codex CLI for user..."
     sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @openai/codex@latest'
 
     # Install CLI Proxy API tooling
+    log "Installing CLI Proxy API tooling..."
     sudo -u $USERNAME bash -c 'curl -fsSL https://raw.githubusercontent.com/brokechubb/cliproxyapi-installer/refs/heads/master/cliproxyapi-installer | bash'
 
     # Install git-ai-commit CLI for conventional commit generation
+    log "Installing git-ai-commit CLI..."
     sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @ksw8954/git-ai-commit'
     
     # Add a function to automatically fix nvm/npm conflicts
@@ -181,28 +208,29 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     echo 'fix_nvm_npm_conflict' >> /home/$USERNAME/.zshrc
 
     # Install uv for user
+    log "Installing uv for user..."
     sudo -u $USERNAME bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh'
-    
+
     # Install GitUI
-    echo "Installing GitUI..."
+    log "Installing GitUI..."
     curl -L https://github.com/gitui-org/gitui/releases/download/v0.27.0/gitui-linux-x86_64.tar.gz -o /tmp/gitui.tar.gz
     tar -xzf /tmp/gitui.tar.gz -C /tmp
     mv /tmp/gitui /usr/local/bin/
     chmod +x /usr/local/bin/gitui
     rm -f /tmp/gitui.tar.gz
-    
+
     # Install Just command runner
-    echo "Installing Just..."
+    log "Installing Just..."
     wget -qO - 'https://proget.makedeb.org/debian-feeds/prebuilt-mpr.pub' | gpg --dearmor | tee /usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg 1> /dev/null
     echo "deb [arch=all,$(dpkg --print-architecture) signed-by=/usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg] https://proget.makedeb.org prebuilt-mpr $(lsb_release -cs)" | tee /etc/apt/sources.list.d/prebuilt-mpr.list
     apt update
     apt install -y just
     
     # Install Rust for user with persistent storage
-    echo "Installing Rust..."
+    log "Installing Rust..."
     mkdir -p /data/rust_cargo
     chown $USERNAME:$USERNAME /data/rust_cargo
-    
+
     # Set RUSTUP_HOME and CARGO_HOME to persistent storage
     echo 'export RUSTUP_HOME="/data/rust_cargo/rustup"' >> /home/$USERNAME/.zshrc
     echo 'export CARGO_HOME="/data/rust_cargo/cargo"' >> /home/$USERNAME/.zshrc
@@ -210,11 +238,11 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     echo 'export RUSTUP_HOME="/data/rust_cargo/rustup"' >> /home/$USERNAME/.bashrc
     echo 'export CARGO_HOME="/data/rust_cargo/cargo"' >> /home/$USERNAME/.bashrc
     echo 'export PATH="/data/rust_cargo/cargo/bin:$PATH"' >> /home/$USERNAME/.bashrc
-    
+
     sudo -u $USERNAME bash -c 'export RUSTUP_HOME="/data/rust_cargo/rustup" CARGO_HOME="/data/rust_cargo/cargo" && curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
-    
+
     # Install Go with persistent GOPATH
-    echo "Installing Go..."
+    log "Installing Go..."
     GO_VERSION="1.25.4"
     wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -O /tmp/go.tar.gz
     tar -C /usr/local -xzf /tmp/go.tar.gz
@@ -234,7 +262,7 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
 
     # Install Docker CLI for user (if not already available)
     if ! command -v docker >/dev/null 2>&1; then
-        echo "Installing Docker CLI..."
+        log "Installing Docker CLI..."
         curl -fsSL https://get.docker.com -o get-docker.sh
         sh get-docker.sh
         rm -f get-docker.sh
@@ -242,12 +270,20 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
 
     chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
     chown $USERNAME:$USERNAME /home/$USERNAME/.zshrc /home/$USERNAME/.bashrc
+
+    # Re-enable exit on error for critical sections
+    set -e
+    log "User environment setup completed"
 fi
 
+log "Configuring CLIProxyAPI service..."
 CLIPROXY_DIR="/home/$USERNAME/cliproxyapi"
 
+# Temporarily disable exit on error for optional service setup
+set +e
+
 if [ -d "$CLIPROXY_DIR" ]; then
-    echo "Configuring CLIProxyAPI service..."
+    log "Found CLIProxyAPI directory, configuring service..."
 
     # Ensure configuration directory exists and populate defaults if missing
     sudo -u $USERNAME mkdir -p /home/$USERNAME/.config/cliproxyapi
@@ -292,12 +328,16 @@ EOF
         sudo -u $USERNAME systemctl --user enable cliproxyapi.service || true
         sudo -u $USERNAME systemctl --user restart cliproxyapi.service || sudo -u $USERNAME systemctl --user start cliproxyapi.service || true
     else
-        echo "systemctl not available; CLIProxyAPI service must be started manually."
+        log "systemctl not available; CLIProxyAPI service must be started manually."
     fi
 else
-    echo "CLIProxyAPI directory not found at $CLIPROXY_DIR; skipping service configuration."
+    log "CLIProxyAPI directory not found at $CLIPROXY_DIR; skipping service configuration."
 fi
 
+# Re-enable exit on error for critical sections
+set -e
+
+log "Setting up persistent storage..."
 # Setup user .config persistent storage
 mkdir -p /data/user_config
 chown $USERNAME:$USERNAME /data/user_config
@@ -429,29 +469,34 @@ if [ ! -L "/home/$USERNAME/.qwen" ]; then
     sudo -u $USERNAME ln -sf /data/qwen_config /home/$USERNAME/.qwen
 fi
 
+log "Setting up passwords and SSH keys..."
+
 # Set user password if provided
 if [ "$(jq -r '.user_password // empty' $CONFIG_PATH)" ]; then
+    log "Setting password for user $USERNAME"
     echo "$USERNAME:$(jq -r '.user_password' $CONFIG_PATH)" | chpasswd
 fi
 
 # Set root password if provided
 if [ "$(jq -r '.password // empty' $CONFIG_PATH)" ]; then
+    log "Setting password for root"
     echo "root:$(jq -r '.password' $CONFIG_PATH)" | chpasswd
 fi
 
 # Add SSH keys if provided
 SSH_KEYS=$(jq -r '.ssh_keys[]? // empty' $CONFIG_PATH)
 if [ -n "$SSH_KEYS" ]; then
-    echo "Adding SSH keys for root..."
+    log "Adding SSH keys for root..."
     echo "$SSH_KEYS" > /root/.ssh/authorized_keys
     chmod 600 /root/.ssh/authorized_keys
 
-    echo "Adding SSH keys for $USERNAME..."
+    log "Adding SSH keys for $USERNAME..."
     echo "$SSH_KEYS" > /home/$USERNAME/.ssh/authorized_keys
     chmod 600 /home/$USERNAME/.ssh/authorized_keys
     chown $USERNAME:$USERNAME /home/$USERNAME/.ssh/authorized_keys
 fi
 
+log "Configuring workspace directory..."
 # Setup workspace directory - find ubuntu_data volume with full_access
 UBUNTU_DATA_PATH=""
 for path in \
@@ -459,13 +504,13 @@ for path in \
     "/host/mnt/data/docker/volumes/ubuntu_data/_data"; do
     if [ -d "$path" ]; then
         UBUNTU_DATA_PATH="$path"
-        echo "Found ubuntu_data volume at: $path"
+        log "Found ubuntu_data volume at: $path"
         break
     fi
 done
 
 if [ -n "$UBUNTU_DATA_PATH" ]; then
-    echo "Using ubuntu_data volume as workspace: $UBUNTU_DATA_PATH"
+    log "Using ubuntu_data volume as workspace: $UBUNTU_DATA_PATH"
     chown -R $USERNAME:$USERNAME "$UBUNTU_DATA_PATH" 2>/dev/null || true
     if [ ! -L "/workspace" ]; then
         rm -rf /workspace
@@ -477,7 +522,7 @@ if [ -n "$UBUNTU_DATA_PATH" ]; then
         ln -s "$UBUNTU_DATA_PATH" /share/workspace
     fi
 else
-    echo "Ubuntu_data volume not found, using addon data directory as workspace"
+    log "Ubuntu_data volume not found, using addon data directory as workspace"
     mkdir -p /data/workspace
     chown $USERNAME:$USERNAME /data/workspace
     if [ ! -L "/workspace" ]; then
@@ -495,10 +540,12 @@ fi
 # Ensure user has access to workspace
 chown -R $USERNAME:$USERNAME /data/workspace 2>/dev/null || true
 
+log "Configuring SSH..."
 # Configure SSH port and allow user
 sed -i "s/#Port 22/Port $SSH_PORT/" /etc/ssh/sshd_config
 sed -i "s/AllowUsers root/AllowUsers root $USERNAME/" /etc/ssh/sshd_config
 
+log "Setting up SSH host keys..."
 # Generate SSH host keys if they don't exist - persist in data directory
 if [ ! -d "/data/ssh_host_keys" ]; then
     mkdir -p /data/ssh_host_keys
@@ -516,8 +563,9 @@ chown $USERNAME:$USERNAME /data/user_ssh_keys
 
 # Generate or restore user SSH key
 if [ ! -f "/data/user_ssh_keys/id_ed25519" ]; then
+    log "Generating SSH key for user $USERNAME..."
     sudo -u $USERNAME ssh-keygen -t ed25519 -C "$USERNAME@hass-addon-dev" -f /data/user_ssh_keys/id_ed25519 -N ""
-    echo "Generated SSH key for user $USERNAME:"
+    log "Generated SSH key for user $USERNAME:"
     cat /data/user_ssh_keys/id_ed25519.pub
 fi
 
@@ -525,10 +573,53 @@ fi
 sudo -u $USERNAME ln -sf /data/user_ssh_keys/id_ed25519 /home/$USERNAME/.ssh/id_ed25519
 sudo -u $USERNAME ln -sf /data/user_ssh_keys/id_ed25519.pub /home/$USERNAME/.ssh/id_ed25519.pub
 
-# Start SSH daemon
-echo "Starting SSH daemon on port $SSH_PORT..."
-/usr/sbin/sshd -D &
+# Start SSH daemon with retry logic
+log "Starting SSH daemon on port $SSH_PORT..."
 
-# Keep the container running
-echo "Container is ready!"
-tail -f /dev/null
+# Function to check if SSH daemon is running
+check_sshd() {
+    pgrep -x sshd > /dev/null 2>&1
+}
+
+# Function to start SSH daemon
+start_sshd() {
+    /usr/sbin/sshd -D &
+    SSHD_PID=$!
+    sleep 2
+    if check_sshd; then
+        log "SSH daemon started successfully (PID: $SSHD_PID)"
+        return 0
+    else
+        log "ERROR: SSH daemon failed to start"
+        return 1
+    fi
+}
+
+# Try to start SSH daemon with retries
+RETRY_COUNT=3
+for i in $(seq 1 $RETRY_COUNT); do
+    log "SSH daemon start attempt $i/$RETRY_COUNT"
+    if start_sshd; then
+        break
+    fi
+    if [ $i -lt $RETRY_COUNT ]; then
+        log "Retrying in 5 seconds..."
+        sleep 5
+    else
+        log "FATAL: Failed to start SSH daemon after $RETRY_COUNT attempts"
+        exit 1
+    fi
+done
+
+# Monitor services and keep container running
+log "Container is ready! Services are running."
+log "SSH is available on port $SSH_PORT"
+
+# Keep the container running and periodically check if SSH is still alive
+while true; do
+    sleep 60
+    if ! check_sshd; then
+        log "WARNING: SSH daemon is not running, attempting to restart..."
+        start_sshd || log "ERROR: Failed to restart SSH daemon"
+    fi
+done
