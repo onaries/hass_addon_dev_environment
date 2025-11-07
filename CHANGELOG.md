@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.5] - 2025-11-07
+
+### Added
+- Codex CLI 자동 설치 및 `/data/codex_config` 영구 저장소 연동으로 API 자격 증명 보존
+- CLIProxyAPI 설치 스크립트 실행 및 사용자 수준 systemd 서비스 자동 구성
+- CLIProxyAPI 설정(`~/.config/cliproxyapi`)과 런타임 캐시(`~/.cli-proxy-api`)를 `/data` 하위로 백업하여 재빌드 후에도 유지
+- git-ai-commit CLI 자동 설치 및 `.git-ai-commit/config.json`을 `/data/git_ai_commit_config`로 리다이렉트해 API 설정 유지
+
+### Changed
+- Go 툴체인을 v1.25.4로 업데이트하여 최신 언어 기능과 보안 패치 적용
+- CLIProxyAPI 서비스가 `loginctl enable-linger`와 함께 항상 부팅 시 시작되도록 자동화
+
 ## [1.0.4] - 2025-08-28
 
 ### Added

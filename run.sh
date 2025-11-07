@@ -128,6 +128,15 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     # Add qwen-code CLI to PATH for user
     echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> /home/$USERNAME/.zshrc
     echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> /home/$USERNAME/.bashrc
+
+    # Install Codex CLI for user
+    sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @openai/codex@latest'
+
+    # Install CLI Proxy API tooling
+    sudo -u $USERNAME bash -c 'curl -fsSL https://raw.githubusercontent.com/brokechubb/cliproxyapi-installer/refs/heads/master/cliproxyapi-installer | bash'
+
+    # Install git-ai-commit CLI for conventional commit generation
+    sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @ksw8954/git-ai-commit'
     
     # Add a function to automatically fix nvm/npm conflicts
     echo 'fix_nvm_npm_conflict() {' >> /home/$USERNAME/.zshrc
@@ -206,7 +215,7 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     
     # Install Go with persistent GOPATH
     echo "Installing Go..."
-    GO_VERSION="1.21.5"
+    GO_VERSION="1.25.4"
     wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -O /tmp/go.tar.gz
     tar -C /usr/local -xzf /tmp/go.tar.gz
     rm -f /tmp/go.tar.gz
@@ -235,6 +244,60 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     chown $USERNAME:$USERNAME /home/$USERNAME/.zshrc /home/$USERNAME/.bashrc
 fi
 
+CLIPROXY_DIR="/home/$USERNAME/cliproxyapi"
+
+if [ -d "$CLIPROXY_DIR" ]; then
+    echo "Configuring CLIProxyAPI service..."
+
+    # Ensure configuration directory exists and populate defaults if missing
+    sudo -u $USERNAME mkdir -p /home/$USERNAME/.config/cliproxyapi
+    if [ ! -f "/home/$USERNAME/.config/cliproxyapi/config.yaml" ]; then
+        cat <<'EOF' > /home/$USERNAME/.config/cliproxyapi/config.yaml
+api-keys:
+  - "sk-ZMY74pYQPH5LMtYCNWJvkutzy9e4wgHZdkzcWrWV6VIUc"
+  - "sk-x8ltawZvBMXufZ95uvWS1EM3CAEN3LzTtBPf6drxLtD5A"
+debug: false
+logging-to-file: false
+EOF
+        chown $USERNAME:$USERNAME /home/$USERNAME/.config/cliproxyapi/config.yaml
+    fi
+
+    # Create systemd user service definition
+    sudo -u $USERNAME mkdir -p /home/$USERNAME/.config/systemd/user
+    cat <<EOF > /home/$USERNAME/.config/systemd/user/cliproxyapi.service
+[Unit]
+Description=CLIProxyAPI Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=$CLIPROXY_DIR
+ExecStart=$CLIPROXY_DIR/cli-proxy-api --config /home/$USERNAME/.config/cliproxyapi/config.yaml
+Restart=on-failure
+Environment=HOME=/home/$USERNAME
+
+[Install]
+WantedBy=default.target
+EOF
+    chown $USERNAME:$USERNAME /home/$USERNAME/.config/systemd/user/cliproxyapi.service
+
+    # Allow user services to run without interactive login if supported
+    if command -v loginctl >/dev/null 2>&1; then
+        loginctl enable-linger "$USERNAME" || true
+    fi
+
+    if command -v systemctl >/dev/null 2>&1; then
+        sudo -u $USERNAME systemctl --user daemon-reload || true
+        sudo -u $USERNAME systemctl --user enable cliproxyapi.service || true
+        sudo -u $USERNAME systemctl --user restart cliproxyapi.service || sudo -u $USERNAME systemctl --user start cliproxyapi.service || true
+    else
+        echo "systemctl not available; CLIProxyAPI service must be started manually."
+    fi
+else
+    echo "CLIProxyAPI directory not found at $CLIPROXY_DIR; skipping service configuration."
+fi
+
 # Setup user .config persistent storage
 mkdir -p /data/user_config
 chown $USERNAME:$USERNAME /data/user_config
@@ -259,6 +322,78 @@ if [ ! -L "/home/$USERNAME/.local" ]; then
         rm -rf /home/$USERNAME/.local
     fi
     sudo -u $USERNAME ln -sf /data/user_local /home/$USERNAME/.local
+fi
+
+# Setup git-ai-commit persistent storage
+mkdir -p /data/git_ai_commit_config
+chown $USERNAME:$USERNAME /data/git_ai_commit_config
+
+if [ ! -f "/data/git_ai_commit_config/config.json" ]; then
+    cat <<'EOF' > /data/git_ai_commit_config/config.json
+{
+  "language": "ko",
+  "apiKey": "4f5275be-2f52-4c07-8e9d-a591851c581b",
+  "baseURL": "https://nano-gpt.com/api/v1",
+  "model": "openai/gpt-oss-120b"
+}
+EOF
+    chown $USERNAME:$USERNAME /data/git_ai_commit_config/config.json
+fi
+
+if [ ! -L "/home/$USERNAME/.git-ai-commit" ]; then
+    if [ -d "/home/$USERNAME/.git-ai-commit" ]; then
+        sudo -u $USERNAME cp -r /home/$USERNAME/.git-ai-commit/. /data/git_ai_commit_config/ 2>/dev/null || true
+        rm -rf /home/$USERNAME/.git-ai-commit
+    fi
+    sudo -u $USERNAME ln -sf /data/git_ai_commit_config /home/$USERNAME/.git-ai-commit
+fi
+
+if [ ! -L "/root/.git-ai-commit" ]; then
+    if [ -d "/root/.git-ai-commit" ]; then
+        cp -r /root/.git-ai-commit/. /data/git_ai_commit_config/ 2>/dev/null || true
+        rm -rf /root/.git-ai-commit
+    fi
+    ln -sf /data/git_ai_commit_config /root/.git-ai-commit
+fi
+
+# Setup .cli-proxy-api persistent storage
+mkdir -p /data/cli_proxy_api
+chown $USERNAME:$USERNAME /data/cli_proxy_api
+
+if [ ! -L "/home/$USERNAME/.cli-proxy-api" ]; then
+    if [ -d "/home/$USERNAME/.cli-proxy-api" ]; then
+        sudo -u $USERNAME cp -r /home/$USERNAME/.cli-proxy-api/. /data/cli_proxy_api/ 2>/dev/null || true
+        rm -rf /home/$USERNAME/.cli-proxy-api
+    fi
+    sudo -u $USERNAME ln -sf /data/cli_proxy_api /home/$USERNAME/.cli-proxy-api
+fi
+
+if [ ! -L "/root/.cli-proxy-api" ]; then
+    if [ -d "/root/.cli-proxy-api" ]; then
+        cp -r /root/.cli-proxy-api/. /data/cli_proxy_api/ 2>/dev/null || true
+        rm -rf /root/.cli-proxy-api
+    fi
+    ln -sf /data/cli_proxy_api /root/.cli-proxy-api
+fi
+
+# Setup Codex CLI persistent storage
+mkdir -p /data/codex_config
+chown $USERNAME:$USERNAME /data/codex_config
+
+if [ ! -L "/home/$USERNAME/.codex" ]; then
+    if [ -d "/home/$USERNAME/.codex" ]; then
+        sudo -u $USERNAME cp -r /home/$USERNAME/.codex/. /data/codex_config/ 2>/dev/null || true
+        rm -rf /home/$USERNAME/.codex
+    fi
+    sudo -u $USERNAME ln -sf /data/codex_config /home/$USERNAME/.codex
+fi
+
+if [ ! -L "/root/.codex" ]; then
+    if [ -d "/root/.codex" ]; then
+        cp -r /root/.codex/. /data/codex_config/ 2>/dev/null || true
+        rm -rf /root/.codex
+    fi
+    ln -sf /data/codex_config /root/.codex
 fi
 
 # Setup Claude CLI persistent storage for all users
