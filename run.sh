@@ -1,6 +1,11 @@
 #!/bin/bash
 # Exit on error for critical sections, but allow some failures
 set -e
+set -o pipefail
+FAIL_OK=0
+
+# Emit failing command before exiting to help diagnose unexpected shutdowns
+trap 'STATUS=$?; CMD=${BASH_COMMAND}; if [ "$FAIL_OK" = "1" ]; then log "Warning: command \"$CMD\" failed with status $STATUS (suppressed)"; else log "FATAL: command \"$CMD\" exited with status $STATUS"; exit $STATUS; fi' ERR
 
 CONFIG_PATH=/data/options.json
 
@@ -83,6 +88,7 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
 
     # Temporarily disable exit on error for non-critical setup
     set +e
+    FAIL_OK=1
 
     # Create SSH directory for user
     mkdir -p /home/$USERNAME/.ssh
@@ -115,31 +121,33 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
 
     # Install Node.js LTS for user
     log "Installing Node.js LTS for user..."
-    sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm install --lts && nvm use --lts && nvm alias default lts/*'
+    sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm install --lts && (nvm use --lts || nvm use --delete-prefix --lts --silent) && nvm alias default lts/*'
 
-    # Setup npm global packages persistent storage
+    # Clean up npm configs that conflict with nvm and set up persistent globals
     log "Configuring npm global packages storage..."
     mkdir -p /data/npm_global
     chown $USERNAME:$USERNAME /data/npm_global
 
-    # Configure npm to use persistent global directory
-    # Handle npm configuration in a way that's compatible with nvm
-    sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default && npm config delete prefix 2>/dev/null || true'
+    sudo -u $USERNAME bash -c "
+        if [ -f \"\$HOME/.npmrc\" ]; then
+            sed -i '/^prefix=/d' \"\$HOME/.npmrc\"
+            sed -i '/^globalconfig=/d' \"\$HOME/.npmrc\"
+        fi
+    "
 
-    # Set up npm global directory without conflicting with nvm
-    mkdir -p /data/npm_global
-    chown $USERNAME:$USERNAME /data/npm_global
+    sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && (nvm use default >/dev/null || nvm use --delete-prefix default --silent >/dev/null || true) && npm config delete prefix 2>/dev/null || true && npm config delete globalconfig 2>/dev/null || true'
 
-    # Configure npm to use persistent global directory in a nvm-compatible way
-    sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default && npm config set prefix /data/npm_global'
-
-    # Add npm global bin to PATH
+    # Persist npm global installs without touching .npmrc
+    echo 'export NPM_CONFIG_PREFIX="/data/npm_global"' >> /home/$USERNAME/.zshrc
+    echo 'export NPM_CONFIG_PREFIX="/data/npm_global"' >> /home/$USERNAME/.bashrc
     echo 'export PATH="/data/npm_global/bin:$PATH"' >> /home/$USERNAME/.zshrc
     echo 'export PATH="/data/npm_global/bin:$PATH"' >> /home/$USERNAME/.bashrc
 
     # Install Claude CLI for user
     log "Installing Claude CLI for user..."
-    sudo -u $USERNAME bash -c 'curl -fsSL https://claude.ai/install.sh | bash'
+    if ! sudo -u $USERNAME bash -c 'curl -fsSL https://claude.ai/install.sh | bash'; then
+        log "Warning: Failed to install Claude CLI (continuing)"
+    fi
 
     # Add Claude CLI to PATH for user
     echo 'export PATH="$HOME/.local/bin:$PATH"' >> /home/$USERNAME/.zshrc
@@ -149,21 +157,25 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     echo 'alias ccc="claude --dangerously-skip-permissions"' >> /home/$USERNAME/.zshrc
     echo 'alias ccc="claude --dangerously-skip-permissions"' >> /home/$USERNAME/.bashrc
 
-    # Add qwen-code CLI to PATH for user
-    echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> /home/$USERNAME/.zshrc
-    echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> /home/$USERNAME/.bashrc
+    # Add qwen-code CLI to PATH for user (npm global bin already prefixed above)
 
     # Install Codex CLI for user
     log "Installing Codex CLI for user..."
-    sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @openai/codex@latest'
+    if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @openai/codex@latest'; then
+        log "Warning: Failed to install Codex CLI (continuing)"
+    fi
 
     # Install CLI Proxy API tooling
     log "Installing CLI Proxy API tooling..."
-    sudo -u $USERNAME bash -c 'curl -fsSL https://raw.githubusercontent.com/brokechubb/cliproxyapi-installer/refs/heads/master/cliproxyapi-installer | bash'
+    if ! sudo -u $USERNAME bash -c 'curl -fsSL https://raw.githubusercontent.com/brokechubb/cliproxyapi-installer/refs/heads/master/cliproxyapi-installer | bash'; then
+        log "Warning: Failed to install CLI Proxy API tooling (continuing)"
+    fi
 
     # Install git-ai-commit CLI for conventional commit generation
     log "Installing git-ai-commit CLI..."
-    sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @ksw8954/git-ai-commit'
+    if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @ksw8954/git-ai-commit'; then
+        log "Warning: Failed to install git-ai-commit (continuing)"
+    fi
     
     # Add a function to automatically fix nvm/npm conflicts
     echo 'fix_nvm_npm_conflict() {' >> /home/$USERNAME/.zshrc
@@ -209,15 +221,22 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
 
     # Install uv for user
     log "Installing uv for user..."
-    sudo -u $USERNAME bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh'
+    if ! sudo -u $USERNAME bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh'; then
+        log "Warning: Failed to install uv (continuing)"
+    fi
 
     # Install GitUI
     log "Installing GitUI..."
-    curl -L https://github.com/gitui-org/gitui/releases/download/v0.27.0/gitui-linux-x86_64.tar.gz -o /tmp/gitui.tar.gz
-    tar -xzf /tmp/gitui.tar.gz -C /tmp
-    mv /tmp/gitui /usr/local/bin/
-    chmod +x /usr/local/bin/gitui
-    rm -f /tmp/gitui.tar.gz
+    if curl -L https://github.com/gitui-org/gitui/releases/download/v0.27.0/gitui-linux-x86_64.tar.gz -o /tmp/gitui.tar.gz; then
+        if tar -xzf /tmp/gitui.tar.gz -C /tmp && mv /tmp/gitui /usr/local/bin/; then
+            chmod +x /usr/local/bin/gitui
+        else
+            log "Warning: Failed to install GitUI (tar/mv stage)"
+        fi
+        rm -f /tmp/gitui.tar.gz
+    else
+        log "Warning: Failed to download GitUI"
+    fi
 
     # Install Just command runner
     log "Installing Just..."
@@ -273,6 +292,7 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
 
     # Re-enable exit on error for critical sections
     set -e
+    FAIL_OK=0
     log "User environment setup completed"
 fi
 
@@ -281,6 +301,7 @@ CLIPROXY_DIR="/home/$USERNAME/cliproxyapi"
 
 # Temporarily disable exit on error for optional service setup
 set +e
+FAIL_OK=1
 
 if [ -d "$CLIPROXY_DIR" ]; then
     log "Found CLIProxyAPI directory, configuring service..."
@@ -336,6 +357,7 @@ fi
 
 # Re-enable exit on error for critical sections
 set -e
+FAIL_OK=0
 
 log "Setting up persistent storage..."
 # Setup user .config persistent storage
