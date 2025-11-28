@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.6] - 2025-11-28
+
+### Added
+- lsd (LSDeluxe) - 아이콘이 포함된 현대적인 ls 대체 도구
+- duf - 직관적인 디스크 사용량 표시 도구
+- ripgrep (rg) - 빠른 코드 검색 도구 (GitHub releases에서 설치)
+- delta (git-delta) - 향상된 git diff 뷰어
+- mcfly - AI 기반 Ctrl+R 히스토리 검색 도구
+- glances - 종합 시스템 모니터링 도구 (htop 대체)
+
+### Changed
+- git 기본 pager를 delta로 설정하여 diff 가독성 향상
+- bash/zsh에 mcfly 자동 초기화 설정 추가
+- delta 설정: 라인 번호, diff3 충돌 스타일, colorMoved 활성화
+
 ## [1.0.5] - 2025-11-07
 
 ### Added

@@ -38,11 +38,49 @@ RUN curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /
     apt-get install -y docker-ce-cli docker-compose-plugin && \
     rm -rf /var/lib/apt/lists/*
 
-# Install search tools (try package manager first)
+# Install fd-find from package manager
 RUN apt-get update && \
-    (apt-get install -y ripgrep || echo "ripgrep not available via apt") && \
     (apt-get install -y fd-find || echo "fd-find not available via apt") && \
     rm -rf /var/lib/apt/lists/*
+
+# Install ripgrep from pre-compiled binary
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "amd64" ]; then \
+        RG_ARCH="x86_64-unknown-linux-musl"; \
+    elif [ "$ARCH" = "arm64" ]; then \
+        RG_ARCH="aarch64-unknown-linux-gnu"; \
+    else \
+        RG_ARCH=""; \
+    fi && \
+    if [ -n "$RG_ARCH" ]; then \
+        RG_VERSION=$(curl -s https://api.github.com/repos/BurntSushi/ripgrep/releases/latest | jq -r '.tag_name') && \
+        curl -L "https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/ripgrep-${RG_VERSION}-${RG_ARCH}.tar.gz" -o /tmp/ripgrep.tar.gz && \
+        tar -xzf /tmp/ripgrep.tar.gz -C /tmp && \
+        mv /tmp/ripgrep-${RG_VERSION}-${RG_ARCH}/rg /usr/local/bin/ && \
+        chmod +x /usr/local/bin/rg && \
+        rm -rf /tmp/ripgrep.tar.gz /tmp/ripgrep-${RG_VERSION}-${RG_ARCH}; \
+    fi
+
+# Install glances (system monitoring tool)
+RUN pip3 install --break-system-packages glances[all] || pip3 install glances[all]
+
+# Install delta (git-delta) from pre-compiled binary
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "amd64" ]; then \
+        DELTA_ARCH="x86_64-unknown-linux-musl"; \
+    elif [ "$ARCH" = "arm64" ]; then \
+        DELTA_ARCH="aarch64-unknown-linux-gnu"; \
+    else \
+        DELTA_ARCH=""; \
+    fi && \
+    if [ -n "$DELTA_ARCH" ]; then \
+        DELTA_VERSION=$(curl -s https://api.github.com/repos/dandavison/delta/releases/latest | jq -r '.tag_name') && \
+        curl -L "https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/delta-${DELTA_VERSION}-${DELTA_ARCH}.tar.gz" -o /tmp/delta.tar.gz && \
+        tar -xzf /tmp/delta.tar.gz -C /tmp && \
+        mv /tmp/delta-${DELTA_VERSION}-${DELTA_ARCH}/delta /usr/local/bin/ && \
+        chmod +x /usr/local/bin/delta && \
+        rm -rf /tmp/delta.tar.gz /tmp/delta-${DELTA_VERSION}-${DELTA_ARCH}; \
+    fi
 
 # Install nvm (Node Version Manager)
 ENV NVM_DIR=/opt/nvm
@@ -89,6 +127,73 @@ RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
         chmod +x /usr/local/bin/zellij && \
         rm /tmp/zellij.tar.gz; \
     fi
+
+# Install lsd (LSDeluxe) from pre-compiled binary
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "amd64" ]; then \
+        LSD_ARCH="x86_64-unknown-linux-musl"; \
+    elif [ "$ARCH" = "arm64" ]; then \
+        LSD_ARCH="aarch64-unknown-linux-musl"; \
+    else \
+        LSD_ARCH=""; \
+    fi && \
+    if [ -n "$LSD_ARCH" ]; then \
+        LSD_VERSION=$(curl -s https://api.github.com/repos/lsd-rs/lsd/releases/latest | jq -r '.tag_name' | sed 's/^v//') && \
+        curl -L "https://github.com/lsd-rs/lsd/releases/download/v${LSD_VERSION}/lsd-v${LSD_VERSION}-${LSD_ARCH}.tar.gz" -o /tmp/lsd.tar.gz && \
+        tar -xzf /tmp/lsd.tar.gz -C /tmp && \
+        mv /tmp/lsd-v${LSD_VERSION}-${LSD_ARCH}/lsd /usr/local/bin/ && \
+        chmod +x /usr/local/bin/lsd && \
+        rm -rf /tmp/lsd.tar.gz /tmp/lsd-v${LSD_VERSION}-${LSD_ARCH}; \
+    fi
+
+# Install duf (Disk Usage/Free Utility) from pre-compiled binary
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "amd64" ]; then \
+        DUF_ARCH="linux_x86_64"; \
+    elif [ "$ARCH" = "arm64" ]; then \
+        DUF_ARCH="linux_arm64"; \
+    else \
+        DUF_ARCH=""; \
+    fi && \
+    if [ -n "$DUF_ARCH" ]; then \
+        DUF_VERSION=$(curl -s https://api.github.com/repos/muesli/duf/releases/latest | jq -r '.tag_name' | sed 's/^v//') && \
+        curl -L "https://github.com/muesli/duf/releases/download/v${DUF_VERSION}/duf_${DUF_VERSION}_${DUF_ARCH}.tar.gz" -o /tmp/duf.tar.gz && \
+        tar -xzf /tmp/duf.tar.gz -C /tmp && \
+        mv /tmp/duf /usr/local/bin/ && \
+        chmod +x /usr/local/bin/duf && \
+        rm -rf /tmp/duf.tar.gz; \
+    fi
+
+# Install mcfly (Ctrl+R shell history search) from pre-compiled binary
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "amd64" ]; then \
+        MCFLY_ARCH="x86_64-unknown-linux-musl"; \
+    elif [ "$ARCH" = "arm64" ]; then \
+        MCFLY_ARCH="aarch64-unknown-linux-musl"; \
+    else \
+        MCFLY_ARCH=""; \
+    fi && \
+    if [ -n "$MCFLY_ARCH" ]; then \
+        MCFLY_VERSION=$(curl -s https://api.github.com/repos/cantino/mcfly/releases/latest | jq -r '.tag_name' | sed 's/^v//') && \
+        curl -L "https://github.com/cantino/mcfly/releases/download/v${MCFLY_VERSION}/mcfly-v${MCFLY_VERSION}-${MCFLY_ARCH}.tar.gz" -o /tmp/mcfly.tar.gz && \
+        tar -xzf /tmp/mcfly.tar.gz -C /tmp && \
+        mv /tmp/mcfly /usr/local/bin/ && \
+        chmod +x /usr/local/bin/mcfly && \
+        rm -rf /tmp/mcfly.tar.gz; \
+    fi
+
+# Configure git to use delta as pager
+RUN git config --system core.pager delta && \
+    git config --system interactive.diffFilter "delta --color-only" && \
+    git config --system delta.navigate true && \
+    git config --system delta.line-numbers true && \
+    git config --system delta.side-by-side false && \
+    git config --system merge.conflictstyle diff3 && \
+    git config --system diff.colorMoved default
+
+# Configure mcfly for bash and zsh
+RUN echo 'eval "$(mcfly init bash)"' >> /etc/bash.bashrc && \
+    echo 'eval "$(mcfly init zsh)"' >> /etc/zsh/zshrc
 
 # Create vim alias for nvim
 RUN echo 'alias vim="nvim"' >> /etc/zsh/zshrc && \
