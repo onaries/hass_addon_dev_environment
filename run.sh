@@ -508,10 +508,10 @@ chown $USERNAME:$USERNAME /data/claude_config
 mkdir -p /data/qwen_config
 chown $USERNAME:$USERNAME /data/qwen_config
 
-# Create symlinks for Claude CLI configuration
+# Create symlinks for Claude CLI configuration (user)
 if [ ! -L "/home/$USERNAME/.claude" ]; then
     if [ -d "/home/$USERNAME/.claude" ]; then
-        sudo -u $USERNAME cp -r /home/$USERNAME/.claude/* /data/claude_config/ 2>/dev/null || true
+        sudo -u $USERNAME cp -r /home/$USERNAME/.claude/. /data/claude_config/ 2>/dev/null || true
         rm -rf /home/$USERNAME/.claude
     fi
     sudo -u $USERNAME ln -sf /data/claude_config /home/$USERNAME/.claude
@@ -522,6 +522,22 @@ if [ ! -L "/home/$USERNAME/.claude.json" ] && [ -f "/home/$USERNAME/.claude.json
 fi
 if [ ! -L "/home/$USERNAME/.claude.json" ]; then
     sudo -u $USERNAME ln -sf /data/claude_config/.claude.json /home/$USERNAME/.claude.json
+fi
+
+# Create symlinks for Claude CLI configuration (root)
+if [ ! -L "/root/.claude" ]; then
+    if [ -d "/root/.claude" ]; then
+        cp -r /root/.claude/. /data/claude_config/ 2>/dev/null || true
+        rm -rf /root/.claude
+    fi
+    ln -sf /data/claude_config /root/.claude
+fi
+
+if [ ! -L "/root/.claude.json" ] && [ -f "/root/.claude.json" ]; then
+    mv /root/.claude.json /data/claude_config/
+fi
+if [ ! -L "/root/.claude.json" ]; then
+    ln -sf /data/claude_config/.claude.json /root/.claude.json
 fi
 
 # Create symlinks for .qwen configuration
