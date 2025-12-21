@@ -259,32 +259,6 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     echo '# Automatically fix nvm/npm conflicts on shell start' >> /home/$USERNAME/.zshrc
     echo 'fix_nvm_npm_conflict' >> /home/$USERNAME/.zshrc
 
-    # Install uv for user
-    log "Installing uv for user..."
-    if ! sudo -u $USERNAME bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh'; then
-        log "Warning: Failed to install uv (continuing)"
-    fi
-
-    # Install GitUI
-    log "Installing GitUI..."
-    if curl -L https://github.com/gitui-org/gitui/releases/download/v0.27.0/gitui-linux-x86_64.tar.gz -o /tmp/gitui.tar.gz; then
-        if tar -xzf /tmp/gitui.tar.gz -C /tmp && mv /tmp/gitui /usr/local/bin/; then
-            chmod +x /usr/local/bin/gitui
-        else
-            log "Warning: Failed to install GitUI (tar/mv stage)"
-        fi
-        rm -f /tmp/gitui.tar.gz
-    else
-        log "Warning: Failed to download GitUI"
-    fi
-
-    # Install Just command runner
-    log "Installing Just..."
-    wget -qO - 'https://proget.makedeb.org/debian-feeds/prebuilt-mpr.pub' | gpg --dearmor | tee /usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg 1> /dev/null
-    echo "deb [arch=all,$(dpkg --print-architecture) signed-by=/usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg] https://proget.makedeb.org prebuilt-mpr $(lsb_release -cs)" | tee /etc/apt/sources.list.d/prebuilt-mpr.list
-    apt update
-    apt install -y just
-    
     # Install Rust for user with persistent storage
     log "Installing Rust..."
     mkdir -p /data/rust_cargo
@@ -300,13 +274,6 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
 
     sudo -u $USERNAME bash -c 'export RUSTUP_HOME="/data/rust_cargo/rustup" CARGO_HOME="/data/rust_cargo/cargo" && curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
 
-    # Install Go with persistent GOPATH
-    log "Installing Go..."
-    GO_VERSION="1.25.4"
-    wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -O /tmp/go.tar.gz
-    tar -C /usr/local -xzf /tmp/go.tar.gz
-    rm -f /tmp/go.tar.gz
-    
     # Setup persistent GOPATH
     mkdir -p /data/go_workspace
     chown $USERNAME:$USERNAME /data/go_workspace
@@ -334,6 +301,14 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     set -e
     FAIL_OK=0
     log "User environment setup completed"
+fi
+
+log "Ensuring mcfly init is configured in user shells..."
+if [ -f "/home/$USERNAME/.zshrc" ] && ! grep -q 'mcfly init zsh' "/home/$USERNAME/.zshrc"; then
+    echo 'eval "$(mcfly init zsh)"' >> /home/$USERNAME/.zshrc
+fi
+if [ -f "/home/$USERNAME/.bashrc" ] && ! grep -q 'mcfly init bash' "/home/$USERNAME/.bashrc"; then
+    echo 'eval "$(mcfly init bash)"' >> /home/$USERNAME/.bashrc
 fi
 
 if [ -n "$GIT_NAME" ] || [ -n "$GIT_EMAIL" ]; then
