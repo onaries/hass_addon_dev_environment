@@ -199,6 +199,12 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
         log "Warning: Failed to install Codex CLI (continuing)"
     fi
 
+    # Install OpenCode for user
+    log "Installing OpenCode for user..."
+    if ! sudo -u $USERNAME bash -c 'curl -fsSL https://opencode.ai/install | bash'; then
+        log "Warning: Failed to install OpenCode (continuing)"
+    fi
+
     # Install CLI Proxy API tooling
     log "Installing CLI Proxy API tooling..."
     if ! sudo -u $USERNAME bash -c 'curl -fsSL https://raw.githubusercontent.com/brokechubb/cliproxyapi-installer/refs/heads/master/cliproxyapi-installer | bash'; then

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.7] - 2025-12-21
+
+### Added
+- OpenCode CLI 자동 설치
+
 ## [1.0.6] - 2025-11-28
 
 ### Added
