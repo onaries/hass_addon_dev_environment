@@ -182,51 +182,6 @@ RUN ARCH=$(dpkg --print-architecture) && \
         rm -rf /tmp/mcfly.tar.gz; \
     fi
 
-# Install uv and pre-commit
-RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh && \
-    uv tool install pre-commit --tool-dir /usr/local/lib/uv-tools --bin-dir /usr/local/bin
-
-# Install GitUI
-RUN ARCH=$(dpkg --print-architecture) && \
-    if [ "$ARCH" = "amd64" ]; then \
-        GITUI_ARCH="linux-x86_64"; \
-    elif [ "$ARCH" = "arm64" ]; then \
-        GITUI_ARCH="linux-aarch64"; \
-    else \
-        GITUI_ARCH=""; \
-    fi && \
-    if [ -n "$GITUI_ARCH" ]; then \
-        GITUI_VERSION=$(curl -s https://api.github.com/repos/gitui-org/gitui/releases/latest | jq -r '.tag_name') && \
-        curl -L "https://github.com/gitui-org/gitui/releases/download/${GITUI_VERSION}/gitui-${GITUI_ARCH}.tar.gz" -o /tmp/gitui.tar.gz && \
-        tar -xzf /tmp/gitui.tar.gz -C /tmp && \
-        mv /tmp/gitui /usr/local/bin/ && \
-        chmod +x /usr/local/bin/gitui && \
-        rm -f /tmp/gitui.tar.gz; \
-    fi
-
-# Install Just command runner
-RUN wget -qO - 'https://proget.makedeb.org/debian-feeds/prebuilt-mpr.pub' | gpg --dearmor | tee /usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg 1> /dev/null && \
-    echo "deb [arch=all,$(dpkg --print-architecture) signed-by=/usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg] https://proget.makedeb.org prebuilt-mpr $(lsb_release -cs)" | tee /etc/apt/sources.list.d/prebuilt-mpr.list && \
-    apt-get update && \
-    apt-get install -y just && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install Go
-RUN ARCH=$(dpkg --print-architecture) && \
-    GO_VERSION="1.23.4" && \
-    if [ "$ARCH" = "amd64" ]; then \
-        GO_ARCH="linux-amd64"; \
-    elif [ "$ARCH" = "arm64" ]; then \
-        GO_ARCH="linux-arm64"; \
-    else \
-        GO_ARCH=""; \
-    fi && \
-    if [ -n "$GO_ARCH" ]; then \
-        wget "https://go.dev/dl/go${GO_VERSION}.${GO_ARCH}.tar.gz" -O /tmp/go.tar.gz && \
-        tar -C /usr/local -xzf /tmp/go.tar.gz && \
-        rm -f /tmp/go.tar.gz; \
-    fi
-
 # Configure git to use delta as pager
 RUN git config --system core.pager delta && \
     git config --system interactive.diffFilter "delta --color-only" && \
