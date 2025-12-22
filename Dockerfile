@@ -27,6 +27,7 @@ RUN apt-get update && \
         htop \
         tree \
         tmux \
+        unzip \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /var/run/sshd \
     && mkdir -p /run/sshd
