@@ -195,7 +195,7 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
 
     # Install Codex CLI for user
     log "Installing Codex CLI for user..."
-    if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @openai/codex@latest'; then
+    if ! sudo -u $USERNAME bash -c 'source $HOME/.bun/bin/bun && bun install -g @openai/codex@latest'; then
         log "Warning: Failed to install Codex CLI (continuing)"
     fi
 
