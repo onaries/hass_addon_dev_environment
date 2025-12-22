@@ -28,6 +28,11 @@ RUN apt-get update && \
         tree \
         tmux \
         unzip \
+        net-tools \
+        iputils-ping \
+        sqlite3 \
+        libssl-dev \
+        libffi-dev \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /var/run/sshd \
     && mkdir -p /run/sshd
