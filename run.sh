@@ -216,6 +216,18 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @ksw8954/git-ai-commit'; then
         log "Warning: Failed to install git-ai-commit (continuing)"
     fi
+
+    # Install Bun for user
+    log "Installing Bun for user..."
+    if ! sudo -u $USERNAME bash -c 'curl -fsSL https://bun.sh/install | bash'; then
+        log "Warning: Failed to install Bun (continuing)"
+    fi
+
+    # Add Bun to PATH for user
+    echo 'export BUN_INSTALL="$HOME/.bun"' >> /home/$USERNAME/.zshrc
+    echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> /home/$USERNAME/.zshrc
+    echo 'export BUN_INSTALL="$HOME/.bun"' >> /home/$USERNAME/.bashrc
+    echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> /home/$USERNAME/.bashrc
     
     # Add a function to automatically fix nvm/npm conflicts
     echo 'fix_nvm_npm_conflict() {' >> /home/$USERNAME/.zshrc
