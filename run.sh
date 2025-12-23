@@ -64,6 +64,9 @@ if ! getent group docker > /dev/null 2>&1; then
 fi
 usermod -aG docker root 2>/dev/null || log "Warning: Failed to add root to docker group"
 
+# Ensure /var/run directory exists
+mkdir -p /var/run
+
 # Set docker socket permissions and create symlink if needed
 log "Searching for Docker socket..."
 DOCKER_SOCK=""
