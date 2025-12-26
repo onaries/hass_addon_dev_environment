@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.9] - 2025-12-26
+
+### Added
+- `gac` alias for `git-ai-commit` command
+- `codex-update` alias for updating Codex CLI (`bun i -g @openai/codex@latest`)
+- `codex-yolo` alias for running Codex in yolo mode (`codex --yolo`)
+
+## [1.0.8] - 2025-12-24
+
+### Added
+- Pre-add known SSH hosts (git.safemotion.kr, github.com) to avoid interactive prompts during git operations
+- Project architecture and workflow documentation in knowledge.md
+- Codebuff project configuration template (codebuff.json)
+
 ## [1.0.7] - 2025-12-21
 
 ### Added

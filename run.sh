@@ -14,6 +14,16 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
 }
 
+TIMEZONE="Asia/Seoul"
+export TZ="$TIMEZONE"
+if [ -f "/usr/share/zoneinfo/$TIMEZONE" ]; then
+    ln -snf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
+    echo "$TIMEZONE" > /etc/timezone
+    log "Timezone set to $TIMEZONE"
+else
+    log "Warning: Timezone data not found for $TIMEZONE"
+fi
+
 configure_git_identity() {
     local target_user=$1
     local label=$2
@@ -199,6 +209,14 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
         log "Warning: Failed to install Codex CLI (continuing)"
     fi
 
+    # Add codex-update alias
+    echo 'alias codex-update="bun i -g @openai/codex@latest"' >> /home/$USERNAME/.zshrc
+    echo 'alias codex-update="bun i -g @openai/codex@latest"' >> /home/$USERNAME/.bashrc
+
+    # Add codex-yolo alias
+    echo 'alias codex-yolo="codex --yolo"' >> /home/$USERNAME/.zshrc
+    echo 'alias codex-yolo="codex --yolo"' >> /home/$USERNAME/.bashrc
+
     # Install OpenCode for user
     log "Installing OpenCode for user..."
     if ! sudo -u $USERNAME bash -c 'curl -fsSL https://opencode.ai/install | bash'; then
@@ -216,6 +234,10 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @ksw8954/git-ai-commit'; then
         log "Warning: Failed to install git-ai-commit (continuing)"
     fi
+
+    # Add git-ai-commit alias
+    echo 'alias gac="git-ai-commit"' >> /home/$USERNAME/.zshrc
+    echo 'alias gac="git-ai-commit"' >> /home/$USERNAME/.bashrc
 
     # Install Bun for user
     log "Installing Bun for user..."
@@ -673,6 +695,19 @@ fi
 # Create symlinks for user SSH keys
 sudo -u $USERNAME ln -sf /data/user_ssh_keys/id_ed25519 /home/$USERNAME/.ssh/id_ed25519
 sudo -u $USERNAME ln -sf /data/user_ssh_keys/id_ed25519.pub /home/$USERNAME/.ssh/id_ed25519.pub
+
+# Pre-add known SSH hosts to avoid interactive prompts during git operations
+log "Adding known SSH hosts..."
+mkdir -p /data/user_ssh_keys/known_hosts.d
+if [ ! -f "/data/user_ssh_keys/known_hosts.d/safemotion" ]; then
+    ssh-keyscan -p 6012 git.safemotion.kr >> /data/user_ssh_keys/known_hosts.d/safemotion 2>/dev/null || true
+fi
+if [ ! -f "/data/user_ssh_keys/known_hosts.d/github" ]; then
+    ssh-keyscan github.com >> /data/user_ssh_keys/known_hosts.d/github 2>/dev/null || true
+fi
+# Merge all known hosts into user's known_hosts file
+cat /data/user_ssh_keys/known_hosts.d/* > /home/$USERNAME/.ssh/known_hosts 2>/dev/null || true
+chown $USERNAME:$USERNAME /home/$USERNAME/.ssh/known_hosts 2>/dev/null || true
 
 # Start SSH daemon with retry logic
 log "Starting SSH daemon on port $SSH_PORT..."

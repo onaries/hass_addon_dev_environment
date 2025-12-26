@@ -5,8 +5,10 @@ FROM $BUILD_FROM
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install packages (use available Python in base image)
+ENV TZ=Asia/Seoul
 RUN apt-get update && \
-    apt-get install -y \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        tzdata \
         python3 \
         python3-dev \
         python3-venv \
