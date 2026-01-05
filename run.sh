@@ -223,6 +223,12 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
         log "Warning: Failed to install OpenCode (continuing)"
     fi
 
+    # Install Fresh editor for user
+    log "Installing Fresh editor for user..."
+    if ! sudo -u $USERNAME bash -c 'curl -fsSL https://raw.githubusercontent.com/sinelaw/fresh/refs/heads/master/scripts/install.sh | sh'; then
+        log "Warning: Failed to install Fresh editor (continuing)"
+    fi
+
     # Install CLI Proxy API tooling
     log "Installing CLI Proxy API tooling..."
     if ! sudo -u $USERNAME bash -c 'curl -fsSL https://raw.githubusercontent.com/brokechubb/cliproxyapi-installer/refs/heads/master/cliproxyapi-installer | bash'; then
@@ -318,6 +324,36 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     echo "deb [arch=all,$(dpkg --print-architecture) signed-by=/usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg] https://proget.makedeb.org prebuilt-mpr $(lsb_release -cs)" | tee /etc/apt/sources.list.d/prebuilt-mpr.list
     apt update
     apt install -y just
+
+    # Install act for running GitHub Actions locally
+    log "Installing act..."
+    curl -s https://raw.githubusercontent.com/nektos/act/master/install.sh | BINDIR=/usr/local/bin bash
+
+    # Setup remote docker context: remote-arm64
+    log "Configuring remote docker context: remote-arm64 (ubuntu@131.186.27.53)..."
+    REMOTE_USER="ubuntu"
+    REMOTE_IP="131.186.27.53"
+
+    # Add remote host to known_hosts to avoid interactive prompts
+    sudo -u $USERNAME mkdir -p /home/$USERNAME/.ssh
+    sudo -u $USERNAME ssh-keyscan -H $REMOTE_IP >> /home/$USERNAME/.ssh/known_hosts 2>/dev/null
+
+    # Create or update the docker context
+    if sudo -u $USERNAME docker context ls | grep -q "remote-arm64"; then
+        sudo -u $USERNAME docker context update remote-arm64 --docker "host=ssh://$REMOTE_USER@$REMOTE_IP"
+    else
+        sudo -u $USERNAME docker context create remote-arm64 --docker "host=ssh://$REMOTE_USER@$REMOTE_IP"
+    fi
+
+    # Set as default context
+    sudo -u $USERNAME docker context use remote-arm64
+    log "Remote docker context 'remote-arm64' set as default."
+
+    # Attempt to copy SSH ID (Note: this will prompt for password if keys aren't already authorized)
+    log "Attempting to copy SSH ID to $REMOTE_USER@$REMOTE_IP..."
+    log "If this hangs, please run 'ssh-copy-id $REMOTE_USER@$REMOTE_IP' manually from the terminal."
+    # We run it with a timeout to prevent permanent hang during initialization
+    sudo -u $USERNAME timeout 10s ssh-copy-id -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_IP" || log "Warning: ssh-copy-id timed out or failed. Manual setup may be required."
     
     # Install Rust for user with persistent storage
     log "Installing Rust..."

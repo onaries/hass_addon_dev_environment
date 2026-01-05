@@ -31,6 +31,7 @@ RUN apt-get update && \
         tmux \
         unzip \
         net-tools \
+        rsync \
         iputils-ping \
         sqlite3 \
         libssl-dev \

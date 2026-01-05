@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-01-05
+
+### Added
+- `rsync` 설치: 파일 동기화 및 전송을 위한 도구 추가
+
 ## [1.0.9] - 2025-12-26
 
 ### Added
