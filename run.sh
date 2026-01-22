@@ -127,7 +127,7 @@ echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME
 chmod 440 /etc/sudoers.d/$USERNAME
 
 # Setup user environment (only if user was just created)
-if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
+if [ ! -d "/home/$USERNAME/.local/share/zinit" ]; then
     log "Setting up user environment for $USERNAME (this may take a while)..."
 
     # Temporarily disable exit on error for non-critical setup
@@ -139,9 +139,10 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     chmod 700 /home/$USERNAME/.ssh
     chown $USERNAME:$USERNAME /home/$USERNAME/.ssh
 
-    # Install oh-my-zsh for user
-    log "Installing oh-my-zsh for user..."
-    sudo -u $USERNAME sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    log "Setting up zsh with Zinit..."
+    if ! sudo -u $USERNAME bash -c 'curl -fsSL https://gist.githubusercontent.com/onaries/7ccb745f920f31cdda03850a9a431d2a/raw/setup-zsh.sh | bash'; then
+        log "Warning: Failed to setup zsh configuration (continuing)"
+    fi
 
     # Install LazyVim for user
     log "Installing LazyVim for user..."
@@ -152,10 +153,12 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     echo 'alias vim="nvim"' >> /home/$USERNAME/.zshrc
     echo 'alias vi="nvim"' >> /home/$USERNAME/.zshrc
 
-    # Add nvm to user's zshrc
+    # Add nvm to user's zshrc (unset NPM_CONFIG_PREFIX to avoid conflict)
+    echo 'unset NPM_CONFIG_PREFIX' >> /home/$USERNAME/.zshrc
     echo 'export NVM_DIR="/opt/nvm"' >> /home/$USERNAME/.zshrc
     echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> /home/$USERNAME/.zshrc
     echo '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"' >> /home/$USERNAME/.zshrc
+    echo 'export PATH="/data/npm_global/bin:$PATH"' >> /home/$USERNAME/.zshrc
 
     # Add Docker environment variable for user
     if [ -n "$DOCKER_SOCK" ]; then
@@ -181,10 +184,6 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
 
     sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && (nvm use default >/dev/null || nvm use --delete-prefix default --silent >/dev/null || true) && npm config delete prefix 2>/dev/null || true && npm config delete globalconfig 2>/dev/null || true'
 
-    # Persist npm global installs without touching .npmrc
-    echo 'export NPM_CONFIG_PREFIX="/data/npm_global"' >> /home/$USERNAME/.zshrc
-    echo 'export NPM_CONFIG_PREFIX="/data/npm_global"' >> /home/$USERNAME/.bashrc
-    echo 'export PATH="/data/npm_global/bin:$PATH"' >> /home/$USERNAME/.zshrc
     echo 'export PATH="/data/npm_global/bin:$PATH"' >> /home/$USERNAME/.bashrc
 
     # Install Claude CLI for user
@@ -229,6 +228,12 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
         log "Warning: Failed to install Fresh editor (continuing)"
     fi
 
+    # Install OpenChamber for user
+    log "Installing OpenChamber for user..."
+    if ! sudo -u $USERNAME bash -c 'curl -fsSL https://raw.githubusercontent.com/btriapitsyn/openchamber/main/scripts/install.sh | bash'; then
+        log "Warning: Failed to install OpenChamber (continuing)"
+    fi
+
     # Install CLI Proxy API tooling
     log "Installing CLI Proxy API tooling..."
     if ! sudo -u $USERNAME bash -c 'curl -fsSL https://raw.githubusercontent.com/brokechubb/cliproxyapi-installer/refs/heads/master/cliproxyapi-installer | bash'; then
@@ -245,6 +250,93 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     echo 'alias gac="git-ai-commit"' >> /home/$USERNAME/.zshrc
     echo 'alias gac="git-ai-commit"' >> /home/$USERNAME/.bashrc
 
+    # Add comprehensive git aliases (oh-my-zsh style)
+    cat >> /home/$USERNAME/.aliases << 'GITALIASES'
+
+# Git aliases (oh-my-zsh style)
+alias gst="git status"
+alias gss="git status -s"
+alias gaa="git add --all"
+alias gapa="git add --patch"
+alias gcm="git commit -m"
+alias gcam="git commit -a -m"
+alias gca="git commit -a"
+alias gc!="git commit --amend"
+alias gca!="git commit -a --amend"
+alias gcn!="git commit --amend --no-edit"
+alias gcan!="git commit -a --amend --no-edit"
+alias gcmsg="git commit -m"
+alias gco="git checkout"
+alias gcb="git checkout -b"
+alias gcd="git checkout develop"
+alias gcm="git checkout main || git checkout master"
+alias gcp="git cherry-pick"
+alias gcpa="git cherry-pick --abort"
+alias gcpc="git cherry-pick --continue"
+alias gd="git diff"
+alias gds="git diff --staged"
+alias gdw="git diff --word-diff"
+alias gf="git fetch"
+alias gfa="git fetch --all --prune"
+alias gfo="git fetch origin"
+alias gl="git pull"
+alias gpr="git pull --rebase"
+alias gpra="git pull --rebase --autostash"
+alias gp="git push"
+alias gpf="git push --force-with-lease"
+alias gpf!="git push --force"
+alias gpoat="git push origin --all && git push origin --tags"
+alias gpu="git push -u origin HEAD"
+alias gb="git branch"
+alias gba="git branch -a"
+alias gbd="git branch -d"
+alias gbD="git branch -D"
+alias gbr="git branch -r"
+alias gbnm="git branch --no-merged"
+alias gm="git merge"
+alias gma="git merge --abort"
+alias gmc="git merge --continue"
+alias grb="git rebase"
+alias grba="git rebase --abort"
+alias grbc="git rebase --continue"
+alias grbi="git rebase -i"
+alias grbm="git rebase main || git rebase master"
+alias grbd="git rebase develop"
+alias grbs="git rebase --skip"
+alias grs="git restore"
+alias grss="git restore --staged"
+alias grst="git reset"
+alias grsth="git reset --hard"
+alias grstsh="git reset --soft HEAD~1"
+alias gsta="git stash"
+alias gstaa="git stash apply"
+alias gstd="git stash drop"
+alias gstl="git stash list"
+alias gstp="git stash pop"
+alias gsts="git stash show --text"
+alias gstc="git stash clear"
+alias glog="git log --oneline --graph --decorate"
+alias gloga="git log --oneline --graph --decorate --all"
+alias glo="git log --oneline"
+alias glol="git log --graph --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%ar) %C(bold blue)<%an>%Creset'"
+alias glola="git log --graph --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%ar) %C(bold blue)<%an>%Creset' --all"
+alias gt="git tag"
+alias gta="git tag -a"
+alias gtd="git tag -d"
+alias gtl="git tag -l"
+alias gsh="git show"
+alias gsw="git switch"
+alias gswc="git switch -c"
+alias gbl="git blame"
+alias gcl="git clone"
+alias gclr="git clone --recurse-submodules"
+alias gcount="git shortlog -sn"
+alias gwip="git add -A; git commit -m 'WIP'"
+alias gunwip="git log -1 --pretty=%B | grep -q 'WIP' && git reset HEAD~1"
+alias gclean="git clean -fd"
+alias gpristine="git reset --hard && git clean -dfx"
+GITALIASES
+
     # Install Bun for user
     log "Installing Bun for user..."
     if ! sudo -u $USERNAME bash -c 'curl -fsSL https://bun.sh/install | bash'; then
@@ -256,48 +348,6 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
     echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> /home/$USERNAME/.zshrc
     echo 'export BUN_INSTALL="$HOME/.bun"' >> /home/$USERNAME/.bashrc
     echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> /home/$USERNAME/.bashrc
-    
-    # Add a function to automatically fix nvm/npm conflicts
-    echo 'fix_nvm_npm_conflict() {' >> /home/$USERNAME/.zshrc
-    echo '  if [[ -f "$HOME/.npmrc" ]]; then' >> /home/$USERNAME/.zshrc
-    echo '    local prefix=$(npm config get prefix 2>/dev/null)' >> /home/$USERNAME/.zshrc
-    echo '    if [[ -n "$prefix" && "$prefix" != "undefined" ]]; then' >> /home/$USERNAME/.zshrc
-    echo '      source /opt/nvm/nvm.sh 2>/dev/null' >> /home/$USERNAME/.zshrc
-    echo '      nvm use --delete-prefix $(node -v 2>/dev/null || nvm current) --silent 2>/dev/null || true' >> /home/$USERNAME/.zshrc
-    echo '    fi' >> /home/$USERNAME/.zshrc
-    echo '  fi' >> /home/$USERNAME/.zshrc
-    echo '}' >> /home/$USERNAME/.zshrc
-    echo '' >> /home/$USERNAME/.zshrc
-    echo '# Automatically fix nvm/npm conflicts on shell start' >> /home/$USERNAME/.zshrc
-    echo 'fix_nvm_npm_conflict' >> /home/$USERNAME/.zshrc
-    
-    # Same for bash
-    echo 'fix_nvm_npm_conflict() {' >> /home/$USERNAME/.bashrc
-    echo '  if [[ -f "$HOME/.npmrc" ]]; then' >> /home/$USERNAME/.bashrc
-    echo '    local prefix=$(npm config get prefix 2>/dev/null)' >> /home/$USERNAME/.bashrc
-    echo '    if [[ -n "$prefix" && "$prefix" != "undefined" ]]; then' >> /home/$USERNAME/.bashrc
-    echo '      source /opt/nvm/nvm.sh 2>/dev/null' >> /home/$USERNAME/.bashrc
-    echo '      nvm use --delete-prefix $(node -v 2>/dev/null || nvm current) --silent 2>/dev/null || true' >> /home/$USERNAME/.bashrc
-    echo '    fi' >> /home/$USERNAME/.bashrc
-    echo '  fi' >> /home/$USERNAME/.bashrc
-    echo '}' >> /home/$USERNAME/.bashrc
-    echo '' >> /home/$USERNAME/.bashrc
-    echo '# Automatically fix nvm/npm conflicts on shell start' >> /home/$USERNAME/.bashrc
-    echo 'fix_nvm_npm_conflict' >> /home/$USERNAME/.bashrc
-    
-    # Add a function to automatically fix nvm/npm conflicts
-    echo 'fix_nvm_npm_conflict() {' >> /home/$USERNAME/.zshrc
-    echo '  if [[ -f "$HOME/.npmrc" ]]; then' >> /home/$USERNAME/.zshrc
-    echo '    local prefix=$(npm config get prefix 2>/dev/null)' >> /home/$USERNAME/.zshrc
-    echo '    if [[ -n "$prefix" && "$prefix" != "undefined" ]]; then' >> /home/$USERNAME/.zshrc
-    echo '      source /opt/nvm/nvm.sh 2>/dev/null' >> /home/$USERNAME/.zshrc
-    echo '      nvm use --delete-prefix $(node -v 2>/dev/null || nvm current) --silent 2>/dev/null || true' >> /home/$USERNAME/.zshrc
-    echo '    fi' >> /home/$USERNAME/.zshrc
-    echo '  fi' >> /home/$USERNAME/.zshrc
-    echo '}' >> /home/$USERNAME/.zshrc
-    echo '' >> /home/$USERNAME/.zshrc
-    echo '# Automatically fix nvm/npm conflicts on shell start' >> /home/$USERNAME/.zshrc
-    echo 'fix_nvm_npm_conflict' >> /home/$USERNAME/.zshrc
 
     # Install uv for user
     log "Installing uv for user..."
@@ -318,7 +368,13 @@ if [ ! -d "/home/$USERNAME/.oh-my-zsh" ]; then
         log "Warning: Failed to download GitUI"
     fi
 
-    # Install Just command runner
+    log "Installing GitHub CLI..."
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+    chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+    apt update
+    apt install -y gh
+
     log "Installing Just..."
     wget -qO - 'https://proget.makedeb.org/debian-feeds/prebuilt-mpr.pub' | gpg --dearmor | tee /usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg 1> /dev/null
     echo "deb [arch=all,$(dpkg --print-architecture) signed-by=/usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg] https://proget.makedeb.org prebuilt-mpr $(lsb_release -cs)" | tee /etc/apt/sources.list.d/prebuilt-mpr.list

@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-01-22
+
+### Added
+- GitHub CLI (gh) 설치: PR, 이슈 관리를 위한 공식 GitHub CLI
+- OpenChamber 설치: AI 코딩 도구
+- Git aliases 80개+ 추가: oh-my-zsh 스타일 (gst, gaa, gcm, gp, grb 등)
+- AGENTS.md: 코딩 에이전트를 위한 프로젝트 가이드라인 문서
+
+### Changed
+- oh-my-zsh를 Zinit으로 교체: 더 빠른 쉘 시작, 모듈화된 플러그인 관리
+- NVM/NPM_CONFIG_PREFIX 충돌 해결: `unset NPM_CONFIG_PREFIX` 방식으로 변경
+- 사용자 환경 체크 조건 변경: `.oh-my-zsh` → `.local/share/zinit`
+
+### Fixed
+- NVM과 npm global 패키지 충돌 문제 해결
+- 불필요한 `fix_nvm_npm_conflict` 함수 제거
+
+### Developer Experience
+- Zinit 플러그인: zsh-completions, zsh-autosuggestions, fast-syntax-highlighting, fzf-history-search, zsh-autocomplete
+- Git 워크플로우 개선: 포괄적인 git alias로 생산성 향상
+- GitHub 통합: gh CLI로 터미널에서 PR/이슈 관리
+
 ## [1.1.0] - 2026-01-05
 
 ### Added
