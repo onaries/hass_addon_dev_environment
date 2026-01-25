@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-01-25
+
+### Added
+- GitHub Actions CI/CD 워크플로우: Docker 이미지 자동 빌드 및 Docker Hub 푸시
+- Docker Hub 이미지 배포 지원: `ksw8954/python-dev-env` (amd64)
+
+### Changed
+- Home Assistant addon이 Docker Hub에서 이미지를 직접 pull하도록 설정
+
 ## [1.2.0] - 2026-01-22
 
 ### Added

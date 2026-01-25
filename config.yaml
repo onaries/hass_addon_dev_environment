@@ -1,8 +1,9 @@
 name: Python Development Environment
-version: "1.2.0"
+version: "1.2.1"
 slug: python_dev_env
 description: "Python 3.11 development environment with SSH, zsh, neovim, and modern tools"
 url: "https://github.com/onaries/hass_addon_dev_environment"
+image: "ksw8954/python-dev-env:{version}"
 webui: "http://[HOST]:[PORT:2322]"
 init: false
 docker_api: true
