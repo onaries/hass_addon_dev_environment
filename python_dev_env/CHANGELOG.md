@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-01-26
+
+### Changed
+- HA addon 저장소 구조 변경: addon 파일을 `python_dev_env/` 하위 디렉토리로 이동
+- `image` 필드 수정: HA Supervisor 호환 형식으로 변경 (`ksw8954/python-dev-env`)
+- 지원 아키텍처를 amd64 단일로 변경
+
 ## [1.2.1] - 2026-01-25
 
 ### Added

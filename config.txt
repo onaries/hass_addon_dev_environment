@@ -1,0 +1,30 @@
+ssh-keys
+
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJGEvK5tPz2dbkYYNvVQwBu81geh+NwhGdyETSebjFpu u0_a1829@localhost
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPqGHv8ifFyFUDBYSsiXCB2qnnYxH2vfe7P7RwX227Wo safemotion@safemotionui-MacBookPro.local
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAAu+1IxoJqYNHm9+WuUCkn++Es4s9ig83n1p+uMMtJR u0_a283@localhost
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKqQ8uDWuFibOCsaC7GD/dWQlWVF37l8A1er6k/lVJ0B u0_a292@localhost
+
+password
+
+Anyumi9281#
+
+ssh_port
+
+2322
+
+username
+
+developer
+
+user_password
+
+Anyumi9281#
+
+git_name
+
+seonwookim
+
+git_email
+
+seonwookim@safemotion.kr
