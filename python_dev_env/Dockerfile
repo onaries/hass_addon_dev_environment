@@ -6,6 +6,8 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install packages (use available Python in base image)
 ENV TZ=Asia/Seoul
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
         tzdata \
@@ -199,6 +201,14 @@ RUN git config --system core.pager delta && \
     git config --system delta.side-by-side false && \
     git config --system merge.conflictstyle diff3 && \
     git config --system diff.colorMoved default
+
+# Set UTF-8 locale for proper terminal rendering (SSH sessions)
+RUN echo 'export LANG=C.UTF-8' >> /etc/profile && \
+    echo 'export LC_ALL=C.UTF-8' >> /etc/profile && \
+    echo 'export LANG=C.UTF-8' >> /etc/zsh/zshrc && \
+    echo 'export LC_ALL=C.UTF-8' >> /etc/zsh/zshrc && \
+    echo 'export LANG=C.UTF-8' >> /etc/bash.bashrc && \
+    echo 'export LC_ALL=C.UTF-8' >> /etc/bash.bashrc
 
 # Configure mcfly for bash and zsh
 RUN echo 'eval "$(mcfly init bash)"' >> /etc/bash.bashrc && \
