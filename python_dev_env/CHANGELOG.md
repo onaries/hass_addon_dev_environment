@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-01-27
+
+### Fixed
+- SSH 터미널 프롬프트 잔상(ghosting) 문제 해결: UTF-8 로케일 설정 추가 (`LANG=C.UTF-8`)
+
 ## [1.2.2] - 2026-01-26
 
 ### Changed
