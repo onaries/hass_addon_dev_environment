@@ -453,6 +453,14 @@ GITALIASES
         rm -f get-docker.sh
     fi
 
+    cat >> /home/$USERNAME/.zshrc << 'TABCYCLE'
+
+# Tab completion cycling
+bindkey '\t' menu-complete
+bindkey "${terminfo[kcbt]}" reverse-menu-complete
+setopt MENU_COMPLETE
+TABCYCLE
+
     chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
     chown $USERNAME:$USERNAME /home/$USERNAME/.zshrc /home/$USERNAME/.bashrc
 
