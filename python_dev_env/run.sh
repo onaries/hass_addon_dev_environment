@@ -234,6 +234,12 @@ if [ ! -d "/home/$USERNAME/.local/share/zinit" ]; then
         log "Warning: Failed to install OpenChamber (continuing)"
     fi
 
+    # Install OpenClaw for user (requires Node.js >= 22)
+    log "Installing OpenClaw for user..."
+    if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && npm install -g openclaw@latest'; then
+        log "Warning: Failed to install OpenClaw (continuing)"
+    fi
+
     # Install CLI Proxy API tooling
     log "Installing CLI Proxy API tooling..."
     if ! sudo -u $USERNAME bash -c 'curl -fsSL https://raw.githubusercontent.com/brokechubb/cliproxyapi-installer/refs/heads/master/cliproxyapi-installer | bash'; then
@@ -258,7 +264,6 @@ alias gst="git status"
 alias gss="git status -s"
 alias gaa="git add --all"
 alias gapa="git add --patch"
-alias gcm="git commit -m"
 alias gcam="git commit -a -m"
 alias gca="git commit -a"
 alias gc!="git commit --amend"
@@ -324,17 +329,73 @@ alias gt="git tag"
 alias gta="git tag -a"
 alias gtd="git tag -d"
 alias gtl="git tag -l"
+alias gts="git tag -s"
+alias gtv="git tag | sort -V"
 alias gsh="git show"
 alias gsw="git switch"
 alias gswc="git switch -c"
-alias gbl="git blame"
-alias gcl="git clone"
-alias gclr="git clone --recurse-submodules"
+alias gswd="git switch develop"
+alias gswm="git switch main || git switch master"
+alias gbl="git blame -b -w"
+alias gcl="git clone --recurse-submodules"
+alias gclean="git clean -id"
+alias gcf="git config --list"
+alias gdct="git describe --tags $(git rev-list --tags --max-count=1)"
+alias gdt="git diff-tree --no-commit-id --name-only -r"
+alias gdnolock="git diff $@ -- . ':(exclude)package-lock.json' ':(exclude)*.lock'"
+alias gdup="git diff @{upstream}"
+alias gfg="git ls-files | grep"
+alias gg="git gui citool"
+alias gga="git gui citool --amend"
+alias ghh="git help"
+alias glg="git log --stat"
+alias glgp="git log --stat -p"
+alias glgg="git log --graph"
+alias glgga="git log --graph --decorate --all"
+alias glgm="git log --graph --max-count=10"
+alias glods="git log --graph --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%ad) %C(bold blue)<%an>%Creset' --date=short"
 alias gcount="git shortlog -sn"
-alias gwip="git add -A; git commit -m 'WIP'"
+alias grev="git revert"
+alias grh="git reset"
+alias grhh="git reset --hard"
+alias grhk="git reset --keep"
+alias grhs="git reset --soft"
+alias groh="git reset origin/$(git branch --show-current) --hard"
+alias gru="git reset --"
+alias grup="git remote update"
+alias grv="git remote -v"
+alias gsb="git status -sb"
+alias gsd="git svn dcommit"
+alias gsr="git svn rebase"
+alias gsi="git submodule init"
+alias gsu="git submodule update"
+alias gpsup="git push --set-upstream origin $(git branch --show-current)"
+alias ghp="git help"
+alias gwch="git whatchanged -p --abbrev-commit --pretty=medium"
+alias gwt="git worktree"
+alias gwta="git worktree add"
+alias gwtls="git worktree list"
+alias gwtmv="git worktree move"
+alias gwtrm="git worktree remove"
+alias gam="git am"
+alias gamc="git am --continue"
+alias gams="git am --skip"
+alias gama="git am --abort"
+alias gap="git apply"
+alias gapt="git apply --3way"
+alias gbs="git bisect"
+alias gbsb="git bisect bad"
+alias gbsg="git bisect good"
+alias gbsn="git bisect new"
+alias gbso="git bisect old"
+alias gbsr="git bisect reset"
+alias gbss="git bisect start"
+alias gwip="git add -A && git rm $(git ls-files --deleted) 2>/dev/null; git commit --no-verify -m 'WIP [skip ci]'"
 alias gunwip="git log -1 --pretty=%B | grep -q 'WIP' && git reset HEAD~1"
-alias gclean="git clean -fd"
-alias gpristine="git reset --hard && git clean -dfx"
+alias gignore="git update-index --assume-unchanged"
+alias gunignore="git update-index --no-assume-unchanged"
+alias gignored="git ls-files -v | grep '^[[:lower:]]'"
+alias gpristine="git reset --hard && git clean -dffx"
 GITALIASES
 
     # Install Bun for user
@@ -638,6 +699,26 @@ if [ ! -L "/root/.codex" ]; then
         rm -rf /root/.codex
     fi
     ln -sf /data/codex_config /root/.codex
+fi
+
+# Setup OpenClaw persistent storage
+mkdir -p /data/openclaw_config
+chown $USERNAME:$USERNAME /data/openclaw_config
+
+if [ ! -L "/home/$USERNAME/.openclaw" ]; then
+    if [ -d "/home/$USERNAME/.openclaw" ]; then
+        sudo -u $USERNAME cp -r /home/$USERNAME/.openclaw/. /data/openclaw_config/ 2>/dev/null || true
+        rm -rf /home/$USERNAME/.openclaw
+    fi
+    sudo -u $USERNAME ln -sf /data/openclaw_config /home/$USERNAME/.openclaw
+fi
+
+if [ ! -L "/root/.openclaw" ]; then
+    if [ -d "/root/.openclaw" ]; then
+        cp -r /root/.openclaw/. /data/openclaw_config/ 2>/dev/null || true
+        rm -rf /root/.openclaw
+    fi
+    ln -sf /data/openclaw_config /root/.openclaw
 fi
 
 # Setup Claude CLI persistent storage for all users

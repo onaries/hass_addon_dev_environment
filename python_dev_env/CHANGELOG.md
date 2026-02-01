@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.4] - 2026-02-01
+
+### Added
+- OpenClaw AI 어시스턴트 설치: `npm install -g openclaw@latest`
+- OpenClaw 설정 영구 저장소: `/data/openclaw_config` → `~/.openclaw`
+
 ## [1.2.3] - 2026-01-27
 
 ### Fixed
