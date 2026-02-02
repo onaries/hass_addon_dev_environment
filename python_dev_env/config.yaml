@@ -34,6 +34,7 @@ options:
   user_password: ""
   git_name: ""
   git_email: ""
+  cliproxy_api_keys: []
 schema:
   ssh_keys:
     - str?
@@ -43,3 +44,5 @@ schema:
   user_password: str?
   git_name: str?
   git_email: str?
+  cliproxy_api_keys:
+    - str?

@@ -65,6 +65,7 @@ USERNAME=$(jq -r '.username // "developer"' $CONFIG_PATH)
 # Optional git identity settings
 GIT_NAME=$(jq -r '.git_name // ""' $CONFIG_PATH)
 GIT_EMAIL=$(jq -r '.git_email // ""' $CONFIG_PATH)
+CLIPROXY_API_KEYS=$(jq -r '.cliproxy_api_keys // [] | .[]' $CONFIG_PATH)
 
 log "Configuring Docker access..."
 
@@ -539,64 +540,143 @@ else
     log "Git identity options not provided; skipping git config"
 fi
 
-log "Configuring CLIProxyAPI service..."
+log "Configuring CLIProxyAPI..."
 CLIPROXY_DIR="/home/$USERNAME/cliproxyapi"
 
-# Temporarily disable exit on error for optional service setup
 set +e
 FAIL_OK=1
 
 if [ -d "$CLIPROXY_DIR" ]; then
-    log "Found CLIProxyAPI directory, configuring service..."
+    log "Found CLIProxyAPI directory, configuring..."
 
-    # Ensure configuration directory exists and populate defaults if missing
     sudo -u $USERNAME mkdir -p /home/$USERNAME/.config/cliproxyapi
-    if [ ! -f "/home/$USERNAME/.config/cliproxyapi/config.yaml" ]; then
-        cat <<'EOF' > /home/$USERNAME/.config/cliproxyapi/config.yaml
-api-keys:
-  - "sk-ZMY74pYQPH5LMtYCNWJvkutzy9e4wgHZdkzcWrWV6VIUc"
-  - "sk-x8ltawZvBMXufZ95uvWS1EM3CAEN3LzTtBPf6drxLtD5A"
-debug: false
-logging-to-file: false
-EOF
+    if [ ! -f "/home/$USERNAME/.config/cliproxyapi/config.yaml" ] || [ -n "$CLIPROXY_API_KEYS" ]; then
+        {
+            echo "debug: false"
+            echo "logging-to-file: false"
+            if [ -n "$CLIPROXY_API_KEYS" ]; then
+                echo "api-keys:"
+                echo "$CLIPROXY_API_KEYS" | while read -r key; do
+                    [ -n "$key" ] && echo "  - \"$key\""
+                done
+            fi
+        } > /home/$USERNAME/.config/cliproxyapi/config.yaml
         chown $USERNAME:$USERNAME /home/$USERNAME/.config/cliproxyapi/config.yaml
     fi
-
-    # Create systemd user service definition
-    sudo -u $USERNAME mkdir -p /home/$USERNAME/.config/systemd/user
-    cat <<EOF > /home/$USERNAME/.config/systemd/user/cliproxyapi.service
-[Unit]
-Description=CLIProxyAPI Service
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-WorkingDirectory=$CLIPROXY_DIR
-ExecStart=$CLIPROXY_DIR/cli-proxy-api --config /home/$USERNAME/.config/cliproxyapi/config.yaml
-Restart=on-failure
-Environment=HOME=/home/$USERNAME
-
-[Install]
-WantedBy=default.target
-EOF
-    chown $USERNAME:$USERNAME /home/$USERNAME/.config/systemd/user/cliproxyapi.service
-
-    # Allow user services to run without interactive login if supported
-    if command -v loginctl >/dev/null 2>&1; then
-        loginctl enable-linger "$USERNAME" || true
-    fi
-
-    if command -v systemctl >/dev/null 2>&1; then
-        sudo -u $USERNAME systemctl --user daemon-reload || true
-        sudo -u $USERNAME systemctl --user enable cliproxyapi.service || true
-        sudo -u $USERNAME systemctl --user restart cliproxyapi.service || sudo -u $USERNAME systemctl --user start cliproxyapi.service || true
-    else
-        log "systemctl not available; CLIProxyAPI service must be started manually."
-    fi
 else
-    log "CLIProxyAPI directory not found at $CLIPROXY_DIR; skipping service configuration."
+    log "CLIProxyAPI directory not found at $CLIPROXY_DIR; skipping."
 fi
+
+sync_opencode_tokens_to_cliproxy() {
+    local auth_json="/home/$USERNAME/.local/share/opencode/auth.json"
+    local cliproxy_auth_dir="/home/$USERNAME/.cli-proxy-api"
+    local antigravity_json="/home/$USERNAME/.local/share/opencode/antigravity-accounts.json"
+
+    if [ ! -f "$auth_json" ]; then
+        log "OpenCode auth.json not found; skipping token sync."
+        return 0
+    fi
+
+    if [ ! -d "$cliproxy_auth_dir" ]; then
+        log "CLIProxyAPI auth dir not found; skipping token sync."
+        return 0
+    fi
+
+    log "Syncing OpenCode OAuth tokens to CLIProxyAPI..."
+
+    ms_to_rfc3339() {
+        local ms=$1
+        local secs=$((ms / 1000))
+        date -u -d "@$secs" '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || \
+            date -u -r "$secs" '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || \
+            echo ""
+    }
+
+    local anth_type
+    anth_type=$(jq -r '.anthropic.type // ""' "$auth_json")
+    if [ "$anth_type" = "oauth" ]; then
+        local anth_access anth_refresh anth_expires anth_expired
+        anth_access=$(jq -r '.anthropic.access // ""' "$auth_json")
+        anth_refresh=$(jq -r '.anthropic.refresh // ""' "$auth_json")
+        anth_expires=$(jq -r '.anthropic.expires // 0' "$auth_json")
+        anth_expired=$(ms_to_rfc3339 "$anth_expires")
+
+        if [ -n "$anth_access" ] && [ -n "$anth_refresh" ]; then
+            jq -n \
+                --arg type "claude" \
+                --arg access_token "$anth_access" \
+                --arg refresh_token "$anth_refresh" \
+                --arg expired "$anth_expired" \
+                --arg last_refresh "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
+                '{type: $type, access_token: $access_token, refresh_token: $refresh_token, expired: $expired, last_refresh: $last_refresh}' \
+                > "$cliproxy_auth_dir/claude-opencode.json"
+            chown "$USERNAME:$USERNAME" "$cliproxy_auth_dir/claude-opencode.json"
+            log "Synced anthropic -> claude-opencode.json"
+        fi
+    fi
+
+    local oai_type
+    oai_type=$(jq -r '.openai.type // ""' "$auth_json")
+    if [ "$oai_type" = "oauth" ]; then
+        local oai_access oai_refresh oai_expires oai_expired
+        oai_access=$(jq -r '.openai.access // ""' "$auth_json")
+        oai_refresh=$(jq -r '.openai.refresh // ""' "$auth_json")
+        oai_expires=$(jq -r '.openai.expires // 0' "$auth_json")
+        oai_expired=$(ms_to_rfc3339 "$oai_expires")
+
+        if [ -n "$oai_access" ] && [ -n "$oai_refresh" ]; then
+            jq -n \
+                --arg type "codex" \
+                --arg access_token "$oai_access" \
+                --arg refresh_token "$oai_refresh" \
+                --arg expired "$oai_expired" \
+                --arg last_refresh "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
+                '{type: $type, access_token: $access_token, refresh_token: $refresh_token, expired: $expired, last_refresh: $last_refresh}' \
+                > "$cliproxy_auth_dir/codex-opencode.json"
+            chown "$USERNAME:$USERNAME" "$cliproxy_auth_dir/codex-opencode.json"
+            log "Synced openai -> codex-opencode.json"
+        fi
+    fi
+
+    local goog_type
+    goog_type=$(jq -r '.google.type // ""' "$auth_json")
+    if [ "$goog_type" = "oauth" ]; then
+        local goog_access goog_refresh_raw goog_refresh goog_project_id goog_expires goog_expired
+        goog_access=$(jq -r '.google.access // ""' "$auth_json")
+        goog_refresh_raw=$(jq -r '.google.refresh // ""' "$auth_json")
+        goog_expires=$(jq -r '.google.expires // 0' "$auth_json")
+        goog_expired=$(ms_to_rfc3339 "$goog_expires")
+
+        # oh-my-opencode appends |project_id to the refresh token
+        goog_refresh="${goog_refresh_raw%%|*}"
+        if [[ "$goog_refresh_raw" == *"|"* ]]; then
+            goog_project_id="${goog_refresh_raw##*|}"
+        else
+            goog_project_id=$(jq -r '.accounts[0].projectId // ""' "$antigravity_json" 2>/dev/null || echo "")
+        fi
+
+        local goog_email
+        goog_email=$(jq -r '.accounts[0].email // ""' "$antigravity_json" 2>/dev/null || echo "")
+
+        if [ -n "$goog_access" ] && [ -n "$goog_refresh" ]; then
+            jq -n \
+                --arg type "gemini" \
+                --arg access_token "$goog_access" \
+                --arg refresh_token "$goog_refresh" \
+                --arg expiry "$goog_expired" \
+                --arg project_id "$goog_project_id" \
+                --arg email "$goog_email" \
+                '{type: $type, token: {access_token: $access_token, refresh_token: $refresh_token, expiry: $expiry}, project_id: $project_id, email: $email, auto: false, checked: true}' \
+                > "$cliproxy_auth_dir/gemini-opencode.json"
+            chown "$USERNAME:$USERNAME" "$cliproxy_auth_dir/gemini-opencode.json"
+            log "Synced google -> gemini-opencode.json (project: $goog_project_id)"
+        fi
+    fi
+
+    log "Token sync complete."
+}
+
+sync_opencode_tokens_to_cliproxy
 
 # Re-enable exit on error for critical sections
 set -e
@@ -890,15 +970,11 @@ fi
 cat /data/user_ssh_keys/known_hosts.d/* > /home/$USERNAME/.ssh/known_hosts 2>/dev/null || true
 chown $USERNAME:$USERNAME /home/$USERNAME/.ssh/known_hosts 2>/dev/null || true
 
-# Start SSH daemon with retry logic
-log "Starting SSH daemon on port $SSH_PORT..."
-
-# Function to check if SSH daemon is running
+# Service management functions
 check_sshd() {
     pgrep -x sshd > /dev/null 2>&1
 }
 
-# Function to start SSH daemon
 start_sshd() {
     /usr/sbin/sshd -D &
     SSHD_PID=$!
@@ -912,7 +988,32 @@ start_sshd() {
     fi
 }
 
-# Try to start SSH daemon with retries
+CLIPROXY_PID=""
+check_cliproxy() {
+    [ -n "$CLIPROXY_PID" ] && kill -0 "$CLIPROXY_PID" 2>/dev/null
+}
+
+start_cliproxy() {
+    local dir="/home/$USERNAME/cliproxyapi"
+    local config="/home/$USERNAME/.config/cliproxyapi/config.yaml"
+    if [ -d "$dir" ] && [ -f "$config" ]; then
+        sudo -u $USERNAME "$dir/cli-proxy-api" --config "$config" &
+        CLIPROXY_PID=$!
+        sleep 1
+        if check_cliproxy; then
+            log "CLIProxyAPI started (PID: $CLIPROXY_PID)"
+            return 0
+        else
+            log "Warning: CLIProxyAPI failed to start"
+            CLIPROXY_PID=""
+            return 1
+        fi
+    fi
+    return 1
+}
+
+# Start SSH daemon with retry logic
+log "Starting SSH daemon on port $SSH_PORT..."
 RETRY_COUNT=3
 for i in $(seq 1 $RETRY_COUNT); do
     log "SSH daemon start attempt $i/$RETRY_COUNT"
@@ -928,15 +1029,21 @@ for i in $(seq 1 $RETRY_COUNT); do
     fi
 done
 
-# Monitor services and keep container running
+# Start CLIProxyAPI
+start_cliproxy || true
+
 log "Container is ready! Services are running."
 log "SSH is available on port $SSH_PORT"
 
-# Keep the container running and periodically check if SSH is still alive
+# Monitor services and keep container running
 while true; do
     sleep 60
     if ! check_sshd; then
         log "WARNING: SSH daemon is not running, attempting to restart..."
         start_sshd || log "ERROR: Failed to restart SSH daemon"
+    fi
+    if [ -n "$CLIPROXY_PID" ] && ! check_cliproxy; then
+        log "WARNING: CLIProxyAPI is not running, attempting to restart..."
+        start_cliproxy || true
     fi
 done
