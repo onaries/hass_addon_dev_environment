@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.5] - 2026-02-03
+
+### Added
+- CLIProxyAPI와 oh-my-opencode OAuth 토큰 자동 동기화: 컨테이너 시작 시 `~/.local/share/opencode/auth.json`에서 `~/.cli-proxy-api/`로 토큰 변환
+  - anthropic → claude-opencode.json
+  - openai → codex-opencode.json  
+  - google → gemini-opencode.json (project_id 포함)
+
+### Fixed
+- root 사용자 git identity 설정 실패 문제 해결 (빈 배열 확장 오류)
+- `just` 설치 실패 문제 해결: makedeb.org (502 에러) 대신 GitHub releases에서 직접 다운로드
+
 ## [1.2.4] - 2026-02-01
 
 ### Added

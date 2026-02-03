@@ -32,13 +32,15 @@ configure_git_identity() {
         return 0
     fi
 
-    local cmd_prefix=()
-    if [ "$target_user" != "root" ]; then
-        cmd_prefix=(sudo -u "$target_user")
+    local run_cmd
+    if [ "$target_user" = "root" ]; then
+        run_cmd=""
+    else
+        run_cmd="sudo -u $target_user"
     fi
 
     if [ -n "$GIT_NAME" ]; then
-        if ! "${cmd_prefix[@]}" git config --global user.name "$GIT_NAME" 2>/dev/null; then
+        if ! $run_cmd git config --global user.name "$GIT_NAME" 2>/dev/null; then
             log "Warning: Failed to set git user.name for $label"
         else
             log "Configured git user.name for $label"
@@ -46,7 +48,7 @@ configure_git_identity() {
     fi
 
     if [ -n "$GIT_EMAIL" ]; then
-        if ! "${cmd_prefix[@]}" git config --global user.email "$GIT_EMAIL" 2>/dev/null; then
+        if ! $run_cmd git config --global user.email "$GIT_EMAIL" 2>/dev/null; then
             log "Warning: Failed to set git user.email for $label"
         else
             log "Configured git user.email for $label"
@@ -438,10 +440,13 @@ GITALIASES
     apt install -y gh
 
     log "Installing Just..."
-    wget -qO - 'https://proget.makedeb.org/debian-feeds/prebuilt-mpr.pub' | gpg --dearmor | tee /usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg 1> /dev/null
-    echo "deb [arch=all,$(dpkg --print-architecture) signed-by=/usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg] https://proget.makedeb.org prebuilt-mpr $(lsb_release -cs)" | tee /etc/apt/sources.list.d/prebuilt-mpr.list
-    apt update
-    apt install -y just
+    JUST_VERSION=$(curl -s https://api.github.com/repos/casey/just/releases/latest | jq -r '.tag_name')
+    if [ -n "$JUST_VERSION" ]; then
+        curl -sSL "https://github.com/casey/just/releases/download/${JUST_VERSION}/just-${JUST_VERSION}-x86_64-unknown-linux-musl.tar.gz" | tar -xz -C /usr/local/bin just
+        chmod +x /usr/local/bin/just
+    else
+        log "Warning: Failed to fetch just version from GitHub"
+    fi
 
     # Install act for running GitHub Actions locally
     log "Installing act..."
