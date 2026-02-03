@@ -64,8 +64,8 @@ RUN ARCH=$(dpkg --print-architecture) && \
         RG_ARCH=""; \
     fi && \
     if [ -n "$RG_ARCH" ]; then \
-        RG_VERSION=$(curl -s https://api.github.com/repos/BurntSushi/ripgrep/releases/latest | jq -r '.tag_name // empty') || true && \
-        [ -z "$RG_VERSION" ] && RG_VERSION="15.1.0" && \
+        RG_VERSION=$(curl -s https://api.github.com/repos/BurntSushi/ripgrep/releases/latest | jq -r '.tag_name // empty' || echo "15.1.0") && \
+        [ -z "$RG_VERSION" ] && RG_VERSION="15.1.0" ; \
         curl -fsSL "https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/ripgrep-${RG_VERSION}-${RG_ARCH}.tar.gz" | tar -xz -C /tmp && \
         mv /tmp/ripgrep-${RG_VERSION}-${RG_ARCH}/rg /usr/local/bin/ && \
         rm -rf /tmp/ripgrep-${RG_VERSION}-${RG_ARCH}; \
@@ -84,8 +84,8 @@ RUN ARCH=$(dpkg --print-architecture) && \
         DELTA_ARCH=""; \
     fi && \
     if [ -n "$DELTA_ARCH" ]; then \
-        DELTA_VERSION=$(curl -s https://api.github.com/repos/dandavison/delta/releases/latest | jq -r '.tag_name // empty') || true && \
-        [ -z "$DELTA_VERSION" ] && DELTA_VERSION="0.18.2" && \
+        DELTA_VERSION=$(curl -s https://api.github.com/repos/dandavison/delta/releases/latest | jq -r '.tag_name // empty' || echo "0.18.2") && \
+        [ -z "$DELTA_VERSION" ] && DELTA_VERSION="0.18.2" ; \
         curl -fsSL "https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/delta-${DELTA_VERSION}-${DELTA_ARCH}.tar.gz" | tar -xz -C /tmp && \
         mv /tmp/delta-${DELTA_VERSION}-${DELTA_ARCH}/delta /usr/local/bin/ && \
         rm -rf /tmp/delta-${DELTA_VERSION}-${DELTA_ARCH}; \
@@ -129,8 +129,8 @@ RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
 
 # Install zellij from pre-compiled binary (x86_64 only, skip on other architectures)
 RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
-        ZELLIJ_VERSION=$(curl -s https://api.github.com/repos/zellij-org/zellij/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//') || true && \
-        [ -z "$ZELLIJ_VERSION" ] && ZELLIJ_VERSION="0.43.1" && \
+        ZELLIJ_VERSION=$(curl -s https://api.github.com/repos/zellij-org/zellij/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//' || echo "0.43.1") && \
+        [ -z "$ZELLIJ_VERSION" ] && ZELLIJ_VERSION="0.43.1" ; \
         curl -fsSL "https://github.com/zellij-org/zellij/releases/download/v${ZELLIJ_VERSION}/zellij-x86_64-unknown-linux-musl.tar.gz" | tar -xz -C /tmp && \
         mv /tmp/zellij /usr/local/bin/; \
     fi
@@ -145,8 +145,8 @@ RUN ARCH=$(dpkg --print-architecture) && \
         LSD_ARCH=""; \
     fi && \
     if [ -n "$LSD_ARCH" ]; then \
-        LSD_VERSION=$(curl -s https://api.github.com/repos/lsd-rs/lsd/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//') || true && \
-        [ -z "$LSD_VERSION" ] && LSD_VERSION="1.2.0" && \
+        LSD_VERSION=$(curl -s https://api.github.com/repos/lsd-rs/lsd/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//' || echo "1.2.0") && \
+        [ -z "$LSD_VERSION" ] && LSD_VERSION="1.2.0" ; \
         curl -fsSL "https://github.com/lsd-rs/lsd/releases/download/v${LSD_VERSION}/lsd-v${LSD_VERSION}-${LSD_ARCH}.tar.gz" | tar -xz -C /tmp && \
         mv /tmp/lsd-v${LSD_VERSION}-${LSD_ARCH}/lsd /usr/local/bin/ && \
         rm -rf /tmp/lsd-v${LSD_VERSION}-${LSD_ARCH}; \
@@ -162,8 +162,8 @@ RUN ARCH=$(dpkg --print-architecture) && \
         DUF_ARCH=""; \
     fi && \
     if [ -n "$DUF_ARCH" ]; then \
-        DUF_VERSION=$(curl -s https://api.github.com/repos/muesli/duf/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//') || true && \
-        [ -z "$DUF_VERSION" ] && DUF_VERSION="0.9.1" && \
+        DUF_VERSION=$(curl -s https://api.github.com/repos/muesli/duf/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//' || echo "0.9.1") && \
+        [ -z "$DUF_VERSION" ] && DUF_VERSION="0.9.1" ; \
         curl -fsSL "https://github.com/muesli/duf/releases/download/v${DUF_VERSION}/duf_${DUF_VERSION}_${DUF_ARCH}.tar.gz" | tar -xz -C /tmp && \
         mv /tmp/duf /usr/local/bin/; \
     fi
@@ -178,8 +178,8 @@ RUN ARCH=$(dpkg --print-architecture) && \
         MCFLY_ARCH=""; \
     fi && \
     if [ -n "$MCFLY_ARCH" ]; then \
-        MCFLY_VERSION=$(curl -s https://api.github.com/repos/cantino/mcfly/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//') || true && \
-        [ -z "$MCFLY_VERSION" ] && MCFLY_VERSION="0.9.4" && \
+        MCFLY_VERSION=$(curl -s https://api.github.com/repos/cantino/mcfly/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//' || echo "0.9.4") && \
+        [ -z "$MCFLY_VERSION" ] && MCFLY_VERSION="0.9.4" ; \
         curl -fsSL "https://github.com/cantino/mcfly/releases/download/v${MCFLY_VERSION}/mcfly-v${MCFLY_VERSION}-${MCFLY_ARCH}.tar.gz" | tar -xz -C /tmp && \
         mv /tmp/mcfly /usr/local/bin/; \
     fi
