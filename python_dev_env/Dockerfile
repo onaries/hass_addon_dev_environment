@@ -64,12 +64,11 @@ RUN ARCH=$(dpkg --print-architecture) && \
         RG_ARCH=""; \
     fi && \
     if [ -n "$RG_ARCH" ]; then \
-        RG_VERSION=$(curl -s https://api.github.com/repos/BurntSushi/ripgrep/releases/latest | jq -r '.tag_name') && \
-        curl -L "https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/ripgrep-${RG_VERSION}-${RG_ARCH}.tar.gz" -o /tmp/ripgrep.tar.gz && \
-        tar -xzf /tmp/ripgrep.tar.gz -C /tmp && \
+        RG_VERSION=$(curl -s https://api.github.com/repos/BurntSushi/ripgrep/releases/latest | jq -r '.tag_name // empty') || true && \
+        [ -z "$RG_VERSION" ] && RG_VERSION="15.1.0" && \
+        curl -fsSL "https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/ripgrep-${RG_VERSION}-${RG_ARCH}.tar.gz" | tar -xz -C /tmp && \
         mv /tmp/ripgrep-${RG_VERSION}-${RG_ARCH}/rg /usr/local/bin/ && \
-        chmod +x /usr/local/bin/rg && \
-        rm -rf /tmp/ripgrep.tar.gz /tmp/ripgrep-${RG_VERSION}-${RG_ARCH}; \
+        rm -rf /tmp/ripgrep-${RG_VERSION}-${RG_ARCH}; \
     fi
 
 # Install glances (system monitoring tool)
@@ -85,12 +84,11 @@ RUN ARCH=$(dpkg --print-architecture) && \
         DELTA_ARCH=""; \
     fi && \
     if [ -n "$DELTA_ARCH" ]; then \
-        DELTA_VERSION=$(curl -s https://api.github.com/repos/dandavison/delta/releases/latest | jq -r '.tag_name') && \
-        curl -L "https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/delta-${DELTA_VERSION}-${DELTA_ARCH}.tar.gz" -o /tmp/delta.tar.gz && \
-        tar -xzf /tmp/delta.tar.gz -C /tmp && \
+        DELTA_VERSION=$(curl -s https://api.github.com/repos/dandavison/delta/releases/latest | jq -r '.tag_name // empty') || true && \
+        [ -z "$DELTA_VERSION" ] && DELTA_VERSION="0.18.2" && \
+        curl -fsSL "https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/delta-${DELTA_VERSION}-${DELTA_ARCH}.tar.gz" | tar -xz -C /tmp && \
         mv /tmp/delta-${DELTA_VERSION}-${DELTA_ARCH}/delta /usr/local/bin/ && \
-        chmod +x /usr/local/bin/delta && \
-        rm -rf /tmp/delta.tar.gz /tmp/delta-${DELTA_VERSION}-${DELTA_ARCH}; \
+        rm -rf /tmp/delta-${DELTA_VERSION}-${DELTA_ARCH}; \
     fi
 
 # Install nvm (Node Version Manager)
@@ -131,12 +129,10 @@ RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
 
 # Install zellij from pre-compiled binary (x86_64 only, skip on other architectures)
 RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
-        ZELLIJ_VERSION=$(curl -s https://api.github.com/repos/zellij-org/zellij/releases/latest | jq -r '.tag_name' | sed 's/^v//') && \
-        curl -L "https://github.com/zellij-org/zellij/releases/download/v${ZELLIJ_VERSION}/zellij-x86_64-unknown-linux-musl.tar.gz" -o /tmp/zellij.tar.gz && \
-        tar -xzf /tmp/zellij.tar.gz -C /tmp && \
-        mv /tmp/zellij /usr/local/bin/ && \
-        chmod +x /usr/local/bin/zellij && \
-        rm /tmp/zellij.tar.gz; \
+        ZELLIJ_VERSION=$(curl -s https://api.github.com/repos/zellij-org/zellij/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//') || true && \
+        [ -z "$ZELLIJ_VERSION" ] && ZELLIJ_VERSION="0.43.1" && \
+        curl -fsSL "https://github.com/zellij-org/zellij/releases/download/v${ZELLIJ_VERSION}/zellij-x86_64-unknown-linux-musl.tar.gz" | tar -xz -C /tmp && \
+        mv /tmp/zellij /usr/local/bin/; \
     fi
 
 # Install lsd (LSDeluxe) from pre-compiled binary
@@ -149,12 +145,11 @@ RUN ARCH=$(dpkg --print-architecture) && \
         LSD_ARCH=""; \
     fi && \
     if [ -n "$LSD_ARCH" ]; then \
-        LSD_VERSION=$(curl -s https://api.github.com/repos/lsd-rs/lsd/releases/latest | jq -r '.tag_name' | sed 's/^v//') && \
-        curl -L "https://github.com/lsd-rs/lsd/releases/download/v${LSD_VERSION}/lsd-v${LSD_VERSION}-${LSD_ARCH}.tar.gz" -o /tmp/lsd.tar.gz && \
-        tar -xzf /tmp/lsd.tar.gz -C /tmp && \
+        LSD_VERSION=$(curl -s https://api.github.com/repos/lsd-rs/lsd/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//') || true && \
+        [ -z "$LSD_VERSION" ] && LSD_VERSION="1.2.0" && \
+        curl -fsSL "https://github.com/lsd-rs/lsd/releases/download/v${LSD_VERSION}/lsd-v${LSD_VERSION}-${LSD_ARCH}.tar.gz" | tar -xz -C /tmp && \
         mv /tmp/lsd-v${LSD_VERSION}-${LSD_ARCH}/lsd /usr/local/bin/ && \
-        chmod +x /usr/local/bin/lsd && \
-        rm -rf /tmp/lsd.tar.gz /tmp/lsd-v${LSD_VERSION}-${LSD_ARCH}; \
+        rm -rf /tmp/lsd-v${LSD_VERSION}-${LSD_ARCH}; \
     fi
 
 # Install duf (Disk Usage/Free Utility) from pre-compiled binary
@@ -167,12 +162,10 @@ RUN ARCH=$(dpkg --print-architecture) && \
         DUF_ARCH=""; \
     fi && \
     if [ -n "$DUF_ARCH" ]; then \
-        DUF_VERSION=$(curl -s https://api.github.com/repos/muesli/duf/releases/latest | jq -r '.tag_name' | sed 's/^v//') && \
-        curl -L "https://github.com/muesli/duf/releases/download/v${DUF_VERSION}/duf_${DUF_VERSION}_${DUF_ARCH}.tar.gz" -o /tmp/duf.tar.gz && \
-        tar -xzf /tmp/duf.tar.gz -C /tmp && \
-        mv /tmp/duf /usr/local/bin/ && \
-        chmod +x /usr/local/bin/duf && \
-        rm -rf /tmp/duf.tar.gz; \
+        DUF_VERSION=$(curl -s https://api.github.com/repos/muesli/duf/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//') || true && \
+        [ -z "$DUF_VERSION" ] && DUF_VERSION="0.9.1" && \
+        curl -fsSL "https://github.com/muesli/duf/releases/download/v${DUF_VERSION}/duf_${DUF_VERSION}_${DUF_ARCH}.tar.gz" | tar -xz -C /tmp && \
+        mv /tmp/duf /usr/local/bin/; \
     fi
 
 # Install mcfly (Ctrl+R shell history search) from pre-compiled binary
@@ -185,12 +178,10 @@ RUN ARCH=$(dpkg --print-architecture) && \
         MCFLY_ARCH=""; \
     fi && \
     if [ -n "$MCFLY_ARCH" ]; then \
-        MCFLY_VERSION=$(curl -s https://api.github.com/repos/cantino/mcfly/releases/latest | jq -r '.tag_name' | sed 's/^v//') && \
-        curl -L "https://github.com/cantino/mcfly/releases/download/v${MCFLY_VERSION}/mcfly-v${MCFLY_VERSION}-${MCFLY_ARCH}.tar.gz" -o /tmp/mcfly.tar.gz && \
-        tar -xzf /tmp/mcfly.tar.gz -C /tmp && \
-        mv /tmp/mcfly /usr/local/bin/ && \
-        chmod +x /usr/local/bin/mcfly && \
-        rm -rf /tmp/mcfly.tar.gz; \
+        MCFLY_VERSION=$(curl -s https://api.github.com/repos/cantino/mcfly/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//') || true && \
+        [ -z "$MCFLY_VERSION" ] && MCFLY_VERSION="0.9.4" && \
+        curl -fsSL "https://github.com/cantino/mcfly/releases/download/v${MCFLY_VERSION}/mcfly-v${MCFLY_VERSION}-${MCFLY_ARCH}.tar.gz" | tar -xz -C /tmp && \
+        mv /tmp/mcfly /usr/local/bin/; \
     fi
 
 # Configure git to use delta as pager
