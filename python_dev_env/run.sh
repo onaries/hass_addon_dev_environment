@@ -1006,6 +1006,8 @@ priority=10
 
 [program:syncthing]
 command=/usr/local/bin/syncthing serve --no-browser --gui-address=0.0.0.0:8384 --home=/data/syncthing_config
+directory=/home/$USERNAME
+environment=HOME="/home/$USERNAME"
 user=$USERNAME
 autostart=true
 autorestart=true
@@ -1021,6 +1023,8 @@ if [ -d "$CLIPROXY_DIR" ] && [ -f "$CLIPROXY_CONFIG" ]; then
 
 [program:cliproxyapi]
 command=$CLIPROXY_DIR/cli-proxy-api --config $CLIPROXY_CONFIG
+directory=/home/$USERNAME
+environment=HOME="/home/$USERNAME"
 user=$USERNAME
 autostart=true
 autorestart=true
