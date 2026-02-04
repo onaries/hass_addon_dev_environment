@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.7] - 2026-02-04
+
+### Fixed
+- Supervisor 서비스 HOME 환경변수 미정의 오류 해결
+  - syncthing: `directory`, `environment=HOME` 추가
+  - cliproxyapi: `directory`, `environment=HOME` 추가
+
 ## [1.2.6] - 2026-02-04
 
 ### Added
