@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.8] - 2026-02-04
+
+### Fixed
+- CLIProxyAPI auth 디렉토리 생성 실패 오류 해결
+  - supervisor 환경변수에 `USER`, `XDG_CONFIG_HOME`, `XDG_DATA_HOME` 추가
+  - syncthing, cliproxyapi 모두 동일하게 적용
+
 ## [1.2.7] - 2026-02-04
 
 ### Fixed
