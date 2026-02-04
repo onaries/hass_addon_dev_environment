@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.6] - 2026-02-04
+
+### Added
+- Syncthing 파일 동기화 도구 설치: Web GUI (포트 8384), 파일 전송 (포트 22000)
+  - 설정 영구 저장소: `/data/syncthing_config` → `~/.config/syncthing`
+
+### Changed
+- 프로세스 관리를 supervisor로 전환: sshd, syncthing, cliproxyapi
+  - 즉시 재시작, 로그 분리 (`/var/log/supervisor/`)
+  - `supervisorctl status`로 서비스 상태 확인 가능
+
+### Fixed
+- Dockerfile 외부 도구 설치 안정성 개선: GitHub API 실패 시 fallback 버전 사용
+  - ripgrep (15.1.0), delta (0.18.2), zellij (0.43.1), lsd (1.2.0), duf (0.9.1), mcfly (0.9.4)
+- `[ -z "$VAR" ] && VAR="fallback" &&` 체인 오류 수정: `;`로 분리하여 조건 실패 시에도 계속 진행
+
 ## [1.2.5] - 2026-02-03
 
 ### Added

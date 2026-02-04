@@ -855,6 +855,18 @@ if [ ! -L "/home/$USERNAME/.qwen" ]; then
     sudo -u $USERNAME ln -sf /data/qwen_config /home/$USERNAME/.qwen
 fi
 
+mkdir -p /data/syncthing_config
+chown $USERNAME:$USERNAME /data/syncthing_config
+
+if [ ! -L "/home/$USERNAME/.config/syncthing" ]; then
+    if [ -d "/home/$USERNAME/.config/syncthing" ]; then
+        sudo -u $USERNAME cp -r /home/$USERNAME/.config/syncthing/. /data/syncthing_config/ 2>/dev/null || true
+        rm -rf /home/$USERNAME/.config/syncthing
+    fi
+    sudo -u $USERNAME mkdir -p /home/$USERNAME/.config
+    sudo -u $USERNAME ln -sf /data/syncthing_config /home/$USERNAME/.config/syncthing
+fi
+
 log "Setting up passwords and SSH keys..."
 
 # Set user password if provided
@@ -975,80 +987,53 @@ fi
 cat /data/user_ssh_keys/known_hosts.d/* > /home/$USERNAME/.ssh/known_hosts 2>/dev/null || true
 chown $USERNAME:$USERNAME /home/$USERNAME/.ssh/known_hosts 2>/dev/null || true
 
-# Service management functions
-check_sshd() {
-    pgrep -x sshd > /dev/null 2>&1
-}
+log "Generating supervisord configuration..."
+mkdir -p /var/log/supervisor
+cat > /etc/supervisor/conf.d/services.conf << EOF
+[supervisord]
+nodaemon=true
+logfile=/var/log/supervisor/supervisord.log
+pidfile=/var/run/supervisord.pid
+childlogdir=/var/log/supervisor
 
-start_sshd() {
-    /usr/sbin/sshd -D &
-    SSHD_PID=$!
-    sleep 2
-    if check_sshd; then
-        log "SSH daemon started successfully (PID: $SSHD_PID)"
-        return 0
-    else
-        log "ERROR: SSH daemon failed to start"
-        return 1
-    fi
-}
+[program:sshd]
+command=/usr/sbin/sshd -D
+autostart=true
+autorestart=true
+stdout_logfile=/var/log/supervisor/sshd.log
+stderr_logfile=/var/log/supervisor/sshd_err.log
+priority=10
 
-CLIPROXY_PID=""
-check_cliproxy() {
-    [ -n "$CLIPROXY_PID" ] && kill -0 "$CLIPROXY_PID" 2>/dev/null
-}
+[program:syncthing]
+command=/usr/local/bin/syncthing serve --no-browser --gui-address=0.0.0.0:8384 --home=/data/syncthing_config
+user=$USERNAME
+autostart=true
+autorestart=true
+stdout_logfile=/var/log/supervisor/syncthing.log
+stderr_logfile=/var/log/supervisor/syncthing_err.log
+priority=20
+EOF
 
-start_cliproxy() {
-    local dir="/home/$USERNAME/cliproxyapi"
-    local config="/home/$USERNAME/.config/cliproxyapi/config.yaml"
-    if [ -d "$dir" ] && [ -f "$config" ]; then
-        sudo -u $USERNAME "$dir/cli-proxy-api" --config "$config" &
-        CLIPROXY_PID=$!
-        sleep 1
-        if check_cliproxy; then
-            log "CLIProxyAPI started (PID: $CLIPROXY_PID)"
-            return 0
-        else
-            log "Warning: CLIProxyAPI failed to start"
-            CLIPROXY_PID=""
-            return 1
-        fi
-    fi
-    return 1
-}
+CLIPROXY_DIR="/home/$USERNAME/cliproxyapi"
+CLIPROXY_CONFIG="/home/$USERNAME/.config/cliproxyapi/config.yaml"
+if [ -d "$CLIPROXY_DIR" ] && [ -f "$CLIPROXY_CONFIG" ]; then
+    cat >> /etc/supervisor/conf.d/services.conf << EOF
 
-# Start SSH daemon with retry logic
-log "Starting SSH daemon on port $SSH_PORT..."
-RETRY_COUNT=3
-for i in $(seq 1 $RETRY_COUNT); do
-    log "SSH daemon start attempt $i/$RETRY_COUNT"
-    if start_sshd; then
-        break
-    fi
-    if [ $i -lt $RETRY_COUNT ]; then
-        log "Retrying in 5 seconds..."
-        sleep 5
-    else
-        log "FATAL: Failed to start SSH daemon after $RETRY_COUNT attempts"
-        exit 1
-    fi
-done
+[program:cliproxyapi]
+command=$CLIPROXY_DIR/cli-proxy-api --config $CLIPROXY_CONFIG
+user=$USERNAME
+autostart=true
+autorestart=true
+stdout_logfile=/var/log/supervisor/cliproxyapi.log
+stderr_logfile=/var/log/supervisor/cliproxyapi_err.log
+priority=30
+EOF
+    log "CLIProxyAPI added to supervisor"
+fi
 
-# Start CLIProxyAPI
-start_cliproxy || true
-
-log "Container is ready! Services are running."
+log "Starting services via supervisord..."
 log "SSH is available on port $SSH_PORT"
+log "Syncthing GUI is available on port 8384"
+log "Use 'supervisorctl status' to check service status"
 
-# Monitor services and keep container running
-while true; do
-    sleep 60
-    if ! check_sshd; then
-        log "WARNING: SSH daemon is not running, attempting to restart..."
-        start_sshd || log "ERROR: Failed to restart SSH daemon"
-    fi
-    if [ -n "$CLIPROXY_PID" ] && ! check_cliproxy; then
-        log "WARNING: CLIProxyAPI is not running, attempting to restart..."
-        start_cliproxy || true
-    fi
-done
+exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf

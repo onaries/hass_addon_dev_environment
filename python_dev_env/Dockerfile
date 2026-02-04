@@ -38,6 +38,7 @@ RUN apt-get update && \
         sqlite3 \
         libssl-dev \
         libffi-dev \
+        supervisor \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /var/run/sshd \
     && mkdir -p /run/sshd
@@ -182,6 +183,23 @@ RUN ARCH=$(dpkg --print-architecture) && \
         [ -z "$MCFLY_VERSION" ] && MCFLY_VERSION="0.9.4" ; \
         curl -fsSL "https://github.com/cantino/mcfly/releases/download/v${MCFLY_VERSION}/mcfly-v${MCFLY_VERSION}-${MCFLY_ARCH}.tar.gz" | tar -xz -C /tmp && \
         mv /tmp/mcfly /usr/local/bin/; \
+    fi
+
+# Install Syncthing from pre-compiled binary
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "amd64" ]; then \
+        ST_ARCH="linux-amd64"; \
+    elif [ "$ARCH" = "arm64" ]; then \
+        ST_ARCH="linux-arm64"; \
+    else \
+        ST_ARCH=""; \
+    fi && \
+    if [ -n "$ST_ARCH" ]; then \
+        ST_VERSION=$(curl -s https://api.github.com/repos/syncthing/syncthing/releases/latest | jq -r '.tag_name // empty' || echo "v1.27.12") && \
+        [ -z "$ST_VERSION" ] && ST_VERSION="v1.27.12" ; \
+        curl -fsSL "https://github.com/syncthing/syncthing/releases/download/${ST_VERSION}/syncthing-${ST_ARCH}-${ST_VERSION}.tar.gz" | tar -xz -C /tmp && \
+        mv /tmp/syncthing-${ST_ARCH}-${ST_VERSION}/syncthing /usr/local/bin/ && \
+        rm -rf /tmp/syncthing-${ST_ARCH}-${ST_VERSION}; \
     fi
 
 # Configure git to use delta as pager
