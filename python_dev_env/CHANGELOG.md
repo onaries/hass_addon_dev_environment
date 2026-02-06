@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.10] - 2026-02-06
+
+### Added
+- 사용자 스크립트 영구 저장소: `/data/user_scripts` → `~/scripts` (Syncthing 동기화 대상)
+- zsh 단축 함수: `_server`, `_kid`, `_my` (서버 접속 스크립트 래퍼)
+
 ## [1.2.9] - 2026-02-06
 
 ### Added
