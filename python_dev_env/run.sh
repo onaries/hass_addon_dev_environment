@@ -559,6 +559,8 @@ if [ -d "$CLIPROXY_DIR" ]; then
         {
             echo "debug: false"
             echo "logging-to-file: false"
+            echo "auth-dir: /data/cli_proxy_api"
+            echo "port: 8317"
             if [ -n "$CLIPROXY_API_KEYS" ]; then
                 echo "api-keys:"
                 echo "$CLIPROXY_API_KEYS" | while read -r key; do

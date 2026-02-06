@@ -1,5 +1,5 @@
 name: Python Development Environment
-version: "1.2.8"
+version: "1.2.9"
 slug: python_dev_env
 description: "Python 3.11 development environment with SSH, zsh, neovim, and modern tools"
 url: "https://github.com/onaries/hass_addon_dev_environment"
@@ -13,11 +13,13 @@ arch:
   - amd64
 ports:
   "2322/tcp": 2322
+  "8317/tcp": 8317
   "8384/tcp": 8384
   "22000/tcp": 22000
   "22000/udp": 22000
 ports_description:
   "2322/tcp": "SSH port"
+  "8317/tcp": "CLIProxyAPI"
   "8384/tcp": "Syncthing Web GUI"
   "22000/tcp": "Syncthing file transfer"
   "22000/udp": "Syncthing QUIC transfer"

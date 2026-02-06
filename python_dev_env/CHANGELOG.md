@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.9] - 2026-02-06
+
+### Added
+- CLIProxyAPI 포트 8317 외부 노출: `config.yaml` 포트 매핑 추가
+
+### Fixed
+- CLIProxyAPI `auth-dir` 미설정으로 인한 빈 경로 오류 해결: config에 `auth-dir: /data/cli_proxy_api` 명시
+- CLIProxyAPI 포트 0 바인딩 오류 해결: config에 `port: 8317` 명시
+
 ## [1.2.8] - 2026-02-04
 
 ### Fixed
