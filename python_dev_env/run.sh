@@ -528,6 +528,13 @@ bindkey "${terminfo[kcbt]}" reverse-menu-complete
 setopt MENU_COMPLETE
 TABCYCLE
 
+    cat >> /home/$USERNAME/.zshrc << 'CONNECTFUNCS'
+
+_server() { ~/scripts/connect_server; }
+_kid() { ~/scripts/connect_kid; }
+_my() { ~/scripts/connect_my; }
+CONNECTFUNCS
+
     chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
     chown $USERNAME:$USERNAME /home/$USERNAME/.zshrc /home/$USERNAME/.bashrc
 
@@ -855,6 +862,18 @@ if [ ! -L "/home/$USERNAME/.qwen" ]; then
         rm -rf /home/$USERNAME/.qwen
     fi
     sudo -u $USERNAME ln -sf /data/qwen_config /home/$USERNAME/.qwen
+fi
+
+# Setup user scripts persistent storage (synced via Syncthing)
+mkdir -p /data/user_scripts
+chown $USERNAME:$USERNAME /data/user_scripts
+
+if [ ! -L "/home/$USERNAME/scripts" ]; then
+    if [ -d "/home/$USERNAME/scripts" ]; then
+        sudo -u $USERNAME cp -r /home/$USERNAME/scripts/. /data/user_scripts/ 2>/dev/null || true
+        rm -rf /home/$USERNAME/scripts
+    fi
+    sudo -u $USERNAME ln -sf /data/user_scripts /home/$USERNAME/scripts
 fi
 
 mkdir -p /data/syncthing_config
