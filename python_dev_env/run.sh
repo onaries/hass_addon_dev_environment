@@ -152,18 +152,12 @@ if [ ! -d "/home/$USERNAME/.local/share/zinit" ]; then
     sudo -u $USERNAME git clone https://github.com/LazyVim/starter /home/$USERNAME/.config/nvim
     sudo -u $USERNAME rm -rf /home/$USERNAME/.config/nvim/.git
 
-    # Add vim aliases to user's zshrc
-    echo 'alias vim="nvim"' >> /home/$USERNAME/.zshrc
-    echo 'alias vi="nvim"' >> /home/$USERNAME/.zshrc
+    echo 'source /etc/shell/env.sh' >> /home/$USERNAME/.zshrc
+    echo 'source /etc/shell/aliases.sh' >> /home/$USERNAME/.zshrc
+    echo 'source /etc/shell/zsh-extra.sh' >> /home/$USERNAME/.zshrc
+    echo 'source /etc/shell/env.sh' >> /home/$USERNAME/.bashrc
+    echo 'source /etc/shell/aliases.sh' >> /home/$USERNAME/.bashrc
 
-    # Add nvm to user's zshrc (unset NPM_CONFIG_PREFIX to avoid conflict)
-    echo 'unset NPM_CONFIG_PREFIX' >> /home/$USERNAME/.zshrc
-    echo 'export NVM_DIR="/opt/nvm"' >> /home/$USERNAME/.zshrc
-    echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> /home/$USERNAME/.zshrc
-    echo '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"' >> /home/$USERNAME/.zshrc
-    echo 'export PATH="/data/npm_global/bin:$PATH"' >> /home/$USERNAME/.zshrc
-
-    # Add Docker environment variable for user
     if [ -n "$DOCKER_SOCK" ]; then
         echo "export DOCKER_HOST=unix://$DOCKER_SOCK" >> /home/$USERNAME/.zshrc
         echo "export DOCKER_HOST=unix://$DOCKER_SOCK" >> /home/$USERNAME/.bashrc
@@ -187,37 +181,18 @@ if [ ! -d "/home/$USERNAME/.local/share/zinit" ]; then
 
     sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && (nvm use default >/dev/null || nvm use --delete-prefix default --silent >/dev/null || true) && npm config delete prefix 2>/dev/null || true && npm config delete globalconfig 2>/dev/null || true'
 
-    echo 'export PATH="/data/npm_global/bin:$PATH"' >> /home/$USERNAME/.bashrc
-
-    # Install Claude CLI for user
     log "Installing Claude CLI for user..."
     if ! sudo -u $USERNAME bash -c 'curl -fsSL https://claude.ai/install.sh | bash'; then
         log "Warning: Failed to install Claude CLI (continuing)"
     fi
 
-    # Add Claude CLI to PATH for user
-    echo 'export PATH="$HOME/.local/bin:$PATH"' >> /home/$USERNAME/.zshrc
-    echo 'export PATH="$HOME/.local/bin:$PATH"' >> /home/$USERNAME/.bashrc
-
-    # Add Claude CLI alias
-    echo 'alias ccc="claude --dangerously-skip-permissions"' >> /home/$USERNAME/.zshrc
-    echo 'alias ccc="claude --dangerously-skip-permissions"' >> /home/$USERNAME/.bashrc
-
-    # Add qwen-code CLI to PATH for user (npm global bin already prefixed above)
-
     # Install Codex CLI for user
     log "Installing Codex CLI for user..."
-    if ! sudo -u $USERNAME bash -c 'source $HOME/.bun/bin/bun && bun install -g @openai/codex@latest'; then
+    if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @openai/codex@latest'; then
         log "Warning: Failed to install Codex CLI (continuing)"
     fi
 
-    # Add codex-update alias
-    echo 'alias codex-update="bun i -g @openai/codex@latest"' >> /home/$USERNAME/.zshrc
-    echo 'alias codex-update="bun i -g @openai/codex@latest"' >> /home/$USERNAME/.bashrc
-
-    # Add codex-yolo alias
-    echo 'alias codex-yolo="codex --yolo"' >> /home/$USERNAME/.zshrc
-    echo 'alias codex-yolo="codex --yolo"' >> /home/$USERNAME/.bashrc
+    rm -f /data/npm_global/bin/codex 2>/dev/null || true
 
     # Install OpenCode for user
     log "Installing OpenCode for user..."
@@ -255,163 +230,11 @@ if [ ! -d "/home/$USERNAME/.local/share/zinit" ]; then
         log "Warning: Failed to install git-ai-commit (continuing)"
     fi
 
-    # Add git-ai-commit alias
-    echo 'alias gac="git-ai-commit"' >> /home/$USERNAME/.zshrc
-    echo 'alias gac="git-ai-commit"' >> /home/$USERNAME/.bashrc
-
-    # Add comprehensive git aliases (oh-my-zsh style)
-    cat >> /home/$USERNAME/.aliases << 'GITALIASES'
-
-# Git aliases (oh-my-zsh style)
-alias gst="git status"
-alias gss="git status -s"
-alias gaa="git add --all"
-alias gapa="git add --patch"
-alias gcam="git commit -a -m"
-alias gca="git commit -a"
-alias gc!="git commit --amend"
-alias gca!="git commit -a --amend"
-alias gcn!="git commit --amend --no-edit"
-alias gcan!="git commit -a --amend --no-edit"
-alias gcmsg="git commit -m"
-alias gco="git checkout"
-alias gcb="git checkout -b"
-alias gcd="git checkout develop"
-alias gcm="git checkout main || git checkout master"
-alias gcp="git cherry-pick"
-alias gcpa="git cherry-pick --abort"
-alias gcpc="git cherry-pick --continue"
-alias gd="git diff"
-alias gds="git diff --staged"
-alias gdw="git diff --word-diff"
-alias gf="git fetch"
-alias gfa="git fetch --all --prune"
-alias gfo="git fetch origin"
-alias gl="git pull"
-alias gpr="git pull --rebase"
-alias gpra="git pull --rebase --autostash"
-alias gp="git push"
-alias gpf="git push --force-with-lease"
-alias gpf!="git push --force"
-alias gpoat="git push origin --all && git push origin --tags"
-alias gpu="git push -u origin HEAD"
-alias gb="git branch"
-alias gba="git branch -a"
-alias gbd="git branch -d"
-alias gbD="git branch -D"
-alias gbr="git branch -r"
-alias gbnm="git branch --no-merged"
-alias gm="git merge"
-alias gma="git merge --abort"
-alias gmc="git merge --continue"
-alias grb="git rebase"
-alias grba="git rebase --abort"
-alias grbc="git rebase --continue"
-alias grbi="git rebase -i"
-alias grbm="git rebase main || git rebase master"
-alias grbd="git rebase develop"
-alias grbs="git rebase --skip"
-alias grs="git restore"
-alias grss="git restore --staged"
-alias grst="git reset"
-alias grsth="git reset --hard"
-alias grstsh="git reset --soft HEAD~1"
-alias gsta="git stash"
-alias gstaa="git stash apply"
-alias gstd="git stash drop"
-alias gstl="git stash list"
-alias gstp="git stash pop"
-alias gsts="git stash show --text"
-alias gstc="git stash clear"
-alias glog="git log --oneline --graph --decorate"
-alias gloga="git log --oneline --graph --decorate --all"
-alias glo="git log --oneline"
-alias glol="git log --graph --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%ar) %C(bold blue)<%an>%Creset'"
-alias glola="git log --graph --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%ar) %C(bold blue)<%an>%Creset' --all"
-alias gt="git tag"
-alias gta="git tag -a"
-alias gtd="git tag -d"
-alias gtl="git tag -l"
-alias gts="git tag -s"
-alias gtv="git tag | sort -V"
-alias gsh="git show"
-alias gsw="git switch"
-alias gswc="git switch -c"
-alias gswd="git switch develop"
-alias gswm="git switch main || git switch master"
-alias gbl="git blame -b -w"
-alias gcl="git clone --recurse-submodules"
-alias gclean="git clean -id"
-alias gcf="git config --list"
-alias gdct="git describe --tags $(git rev-list --tags --max-count=1)"
-alias gdt="git diff-tree --no-commit-id --name-only -r"
-alias gdnolock="git diff $@ -- . ':(exclude)package-lock.json' ':(exclude)*.lock'"
-alias gdup="git diff @{upstream}"
-alias gfg="git ls-files | grep"
-alias gg="git gui citool"
-alias gga="git gui citool --amend"
-alias ghh="git help"
-alias glg="git log --stat"
-alias glgp="git log --stat -p"
-alias glgg="git log --graph"
-alias glgga="git log --graph --decorate --all"
-alias glgm="git log --graph --max-count=10"
-alias glods="git log --graph --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%ad) %C(bold blue)<%an>%Creset' --date=short"
-alias gcount="git shortlog -sn"
-alias grev="git revert"
-alias grh="git reset"
-alias grhh="git reset --hard"
-alias grhk="git reset --keep"
-alias grhs="git reset --soft"
-alias groh="git reset origin/$(git branch --show-current) --hard"
-alias gru="git reset --"
-alias grup="git remote update"
-alias grv="git remote -v"
-alias gsb="git status -sb"
-alias gsd="git svn dcommit"
-alias gsr="git svn rebase"
-alias gsi="git submodule init"
-alias gsu="git submodule update"
-alias gpsup="git push --set-upstream origin $(git branch --show-current)"
-alias ghp="git help"
-alias gwch="git whatchanged -p --abbrev-commit --pretty=medium"
-alias gwt="git worktree"
-alias gwta="git worktree add"
-alias gwtls="git worktree list"
-alias gwtmv="git worktree move"
-alias gwtrm="git worktree remove"
-alias gam="git am"
-alias gamc="git am --continue"
-alias gams="git am --skip"
-alias gama="git am --abort"
-alias gap="git apply"
-alias gapt="git apply --3way"
-alias gbs="git bisect"
-alias gbsb="git bisect bad"
-alias gbsg="git bisect good"
-alias gbsn="git bisect new"
-alias gbso="git bisect old"
-alias gbsr="git bisect reset"
-alias gbss="git bisect start"
-alias gwip="git add -A && git rm $(git ls-files --deleted) 2>/dev/null; git commit --no-verify -m 'WIP [skip ci]'"
-alias gunwip="git log -1 --pretty=%B | grep -q 'WIP' && git reset HEAD~1"
-alias gignore="git update-index --assume-unchanged"
-alias gunignore="git update-index --no-assume-unchanged"
-alias gignored="git ls-files -v | grep '^[[:lower:]]'"
-alias gpristine="git reset --hard && git clean -dffx"
-GITALIASES
-
     # Install Bun for user
     log "Installing Bun for user..."
     if ! sudo -u $USERNAME bash -c 'curl -fsSL https://bun.sh/install | bash'; then
         log "Warning: Failed to install Bun (continuing)"
     fi
-
-    # Add Bun to PATH for user
-    echo 'export BUN_INSTALL="$HOME/.bun"' >> /home/$USERNAME/.zshrc
-    echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> /home/$USERNAME/.zshrc
-    echo 'export BUN_INSTALL="$HOME/.bun"' >> /home/$USERNAME/.bashrc
-    echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> /home/$USERNAME/.bashrc
 
     # Install uv for user
     log "Installing uv for user..."
@@ -483,14 +306,6 @@ GITALIASES
     mkdir -p /data/rust_cargo
     chown $USERNAME:$USERNAME /data/rust_cargo
 
-    # Set RUSTUP_HOME and CARGO_HOME to persistent storage
-    echo 'export RUSTUP_HOME="/data/rust_cargo/rustup"' >> /home/$USERNAME/.zshrc
-    echo 'export CARGO_HOME="/data/rust_cargo/cargo"' >> /home/$USERNAME/.zshrc
-    echo 'export PATH="/data/rust_cargo/cargo/bin:$PATH"' >> /home/$USERNAME/.zshrc
-    echo 'export RUSTUP_HOME="/data/rust_cargo/rustup"' >> /home/$USERNAME/.bashrc
-    echo 'export CARGO_HOME="/data/rust_cargo/cargo"' >> /home/$USERNAME/.bashrc
-    echo 'export PATH="/data/rust_cargo/cargo/bin:$PATH"' >> /home/$USERNAME/.bashrc
-
     sudo -u $USERNAME bash -c 'export RUSTUP_HOME="/data/rust_cargo/rustup" CARGO_HOME="/data/rust_cargo/cargo" && curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
 
     # Install Go with persistent GOPATH
@@ -504,14 +319,6 @@ GITALIASES
     mkdir -p /data/go_workspace
     chown $USERNAME:$USERNAME /data/go_workspace
     
-    echo 'export PATH="/usr/local/go/bin:$PATH"' >> /home/$USERNAME/.zshrc
-    echo 'export GOPATH="/data/go_workspace"' >> /home/$USERNAME/.zshrc
-    echo 'export PATH="/data/go_workspace/bin:$PATH"' >> /home/$USERNAME/.zshrc
-    echo 'export PATH="/usr/local/go/bin:$PATH"' >> /home/$USERNAME/.bashrc
-    echo 'export GOPATH="/data/go_workspace"' >> /home/$USERNAME/.bashrc
-    echo 'export PATH="/data/go_workspace/bin:$PATH"' >> /home/$USERNAME/.bashrc
-
-
     # Install Docker CLI for user (if not already available)
     if ! command -v docker >/dev/null 2>&1; then
         log "Installing Docker CLI..."
@@ -519,21 +326,6 @@ GITALIASES
         sh get-docker.sh
         rm -f get-docker.sh
     fi
-
-    cat >> /home/$USERNAME/.zshrc << 'TABCYCLE'
-
-# Tab completion cycling
-bindkey '\t' menu-complete
-bindkey "${terminfo[kcbt]}" reverse-menu-complete
-setopt MENU_COMPLETE
-TABCYCLE
-
-    cat >> /home/$USERNAME/.zshrc << 'CONNECTFUNCS'
-
-_server() { ~/scripts/connect_server; }
-_kid() { ~/scripts/connect_kid; }
-_my() { ~/scripts/connect_my; }
-CONNECTFUNCS
 
     chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
     chown $USERNAME:$USERNAME /home/$USERNAME/.zshrc /home/$USERNAME/.bashrc
@@ -551,6 +343,15 @@ if [ -n "$GIT_NAME" ] || [ -n "$GIT_EMAIL" ]; then
 else
     log "Git identity options not provided; skipping git config"
 fi
+
+log "Configuring git to use SSH for GitHub..."
+sudo -u $USERNAME git config --global url."git@github.com:".insteadOf "https://github.com/"
+git config --global url."git@github.com:".insteadOf "https://github.com/"
+
+echo 'source /etc/shell/env.sh' >> /root/.zshrc
+echo 'source /etc/shell/aliases.sh' >> /root/.zshrc
+echo 'source /etc/shell/env.sh' >> /root/.bashrc
+echo 'source /etc/shell/aliases.sh' >> /root/.bashrc
 
 log "Configuring CLIProxyAPI..."
 CLIPROXY_DIR="/home/$USERNAME/cliproxyapi"
@@ -580,117 +381,6 @@ if [ -d "$CLIPROXY_DIR" ]; then
 else
     log "CLIProxyAPI directory not found at $CLIPROXY_DIR; skipping."
 fi
-
-sync_opencode_tokens_to_cliproxy() {
-    local auth_json="/home/$USERNAME/.local/share/opencode/auth.json"
-    local cliproxy_auth_dir="/home/$USERNAME/.cli-proxy-api"
-    local antigravity_json="/home/$USERNAME/.local/share/opencode/antigravity-accounts.json"
-
-    if [ ! -f "$auth_json" ]; then
-        log "OpenCode auth.json not found; skipping token sync."
-        return 0
-    fi
-
-    if [ ! -d "$cliproxy_auth_dir" ]; then
-        log "CLIProxyAPI auth dir not found; skipping token sync."
-        return 0
-    fi
-
-    log "Syncing OpenCode OAuth tokens to CLIProxyAPI..."
-
-    ms_to_rfc3339() {
-        local ms=$1
-        local secs=$((ms / 1000))
-        date -u -d "@$secs" '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || \
-            date -u -r "$secs" '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || \
-            echo ""
-    }
-
-    local anth_type
-    anth_type=$(jq -r '.anthropic.type // ""' "$auth_json")
-    if [ "$anth_type" = "oauth" ]; then
-        local anth_access anth_refresh anth_expires anth_expired
-        anth_access=$(jq -r '.anthropic.access // ""' "$auth_json")
-        anth_refresh=$(jq -r '.anthropic.refresh // ""' "$auth_json")
-        anth_expires=$(jq -r '.anthropic.expires // 0' "$auth_json")
-        anth_expired=$(ms_to_rfc3339 "$anth_expires")
-
-        if [ -n "$anth_access" ] && [ -n "$anth_refresh" ]; then
-            jq -n \
-                --arg type "claude" \
-                --arg access_token "$anth_access" \
-                --arg refresh_token "$anth_refresh" \
-                --arg expired "$anth_expired" \
-                --arg last_refresh "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
-                '{type: $type, access_token: $access_token, refresh_token: $refresh_token, expired: $expired, last_refresh: $last_refresh}' \
-                > "$cliproxy_auth_dir/claude-opencode.json"
-            chown "$USERNAME:$USERNAME" "$cliproxy_auth_dir/claude-opencode.json"
-            log "Synced anthropic -> claude-opencode.json"
-        fi
-    fi
-
-    local oai_type
-    oai_type=$(jq -r '.openai.type // ""' "$auth_json")
-    if [ "$oai_type" = "oauth" ]; then
-        local oai_access oai_refresh oai_expires oai_expired
-        oai_access=$(jq -r '.openai.access // ""' "$auth_json")
-        oai_refresh=$(jq -r '.openai.refresh // ""' "$auth_json")
-        oai_expires=$(jq -r '.openai.expires // 0' "$auth_json")
-        oai_expired=$(ms_to_rfc3339 "$oai_expires")
-
-        if [ -n "$oai_access" ] && [ -n "$oai_refresh" ]; then
-            jq -n \
-                --arg type "codex" \
-                --arg access_token "$oai_access" \
-                --arg refresh_token "$oai_refresh" \
-                --arg expired "$oai_expired" \
-                --arg last_refresh "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
-                '{type: $type, access_token: $access_token, refresh_token: $refresh_token, expired: $expired, last_refresh: $last_refresh}' \
-                > "$cliproxy_auth_dir/codex-opencode.json"
-            chown "$USERNAME:$USERNAME" "$cliproxy_auth_dir/codex-opencode.json"
-            log "Synced openai -> codex-opencode.json"
-        fi
-    fi
-
-    local goog_type
-    goog_type=$(jq -r '.google.type // ""' "$auth_json")
-    if [ "$goog_type" = "oauth" ]; then
-        local goog_access goog_refresh_raw goog_refresh goog_project_id goog_expires goog_expired
-        goog_access=$(jq -r '.google.access // ""' "$auth_json")
-        goog_refresh_raw=$(jq -r '.google.refresh // ""' "$auth_json")
-        goog_expires=$(jq -r '.google.expires // 0' "$auth_json")
-        goog_expired=$(ms_to_rfc3339 "$goog_expires")
-
-        # oh-my-opencode appends |project_id to the refresh token
-        goog_refresh="${goog_refresh_raw%%|*}"
-        if [[ "$goog_refresh_raw" == *"|"* ]]; then
-            goog_project_id="${goog_refresh_raw##*|}"
-        else
-            goog_project_id=$(jq -r '.accounts[0].projectId // ""' "$antigravity_json" 2>/dev/null || echo "")
-        fi
-
-        local goog_email
-        goog_email=$(jq -r '.accounts[0].email // ""' "$antigravity_json" 2>/dev/null || echo "")
-
-        if [ -n "$goog_access" ] && [ -n "$goog_refresh" ]; then
-            jq -n \
-                --arg type "gemini" \
-                --arg access_token "$goog_access" \
-                --arg refresh_token "$goog_refresh" \
-                --arg expiry "$goog_expired" \
-                --arg project_id "$goog_project_id" \
-                --arg email "$goog_email" \
-                '{type: $type, token: {access_token: $access_token, refresh_token: $refresh_token, expiry: $expiry}, project_id: $project_id, email: $email, auto: false, checked: true}' \
-                > "$cliproxy_auth_dir/gemini-opencode.json"
-            chown "$USERNAME:$USERNAME" "$cliproxy_auth_dir/gemini-opencode.json"
-            log "Synced google -> gemini-opencode.json (project: $goog_project_id)"
-        fi
-    fi
-
-    log "Token sync complete."
-}
-
-sync_opencode_tokens_to_cliproxy
 
 # Re-enable exit on error for critical sections
 set -e

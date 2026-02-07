@@ -253,7 +253,7 @@ RUN mkdir -p /workspace
 # Set working directory
 WORKDIR /workspace
 
-# Copy startup script
+COPY rootfs/ /
 COPY run.sh /
 RUN chmod a+x /run.sh
 
