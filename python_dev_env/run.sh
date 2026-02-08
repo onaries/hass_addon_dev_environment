@@ -295,11 +295,19 @@ if [ ! -d "/home/$USERNAME/.local/share/zinit" ]; then
     sudo -u $USERNAME docker context use remote-arm64
     log "Remote docker context 'remote-arm64' set as default."
 
-    # Attempt to copy SSH ID (Note: this will prompt for password if keys aren't already authorized)
+    # Generate user SSH key before ssh-copy-id so the identity exists
+    mkdir -p /data/user_ssh_keys
+    chown $USERNAME:$USERNAME /data/user_ssh_keys
+    if [ ! -f "/data/user_ssh_keys/id_ed25519" ]; then
+        log "Generating SSH key for user $USERNAME..."
+        sudo -u $USERNAME ssh-keygen -t ed25519 -C "$USERNAME@hass-addon-dev" -f /data/user_ssh_keys/id_ed25519 -N ""
+    fi
+    sudo -u $USERNAME ln -sf /data/user_ssh_keys/id_ed25519 /home/$USERNAME/.ssh/id_ed25519
+    sudo -u $USERNAME ln -sf /data/user_ssh_keys/id_ed25519.pub /home/$USERNAME/.ssh/id_ed25519.pub
+
     log "Attempting to copy SSH ID to $REMOTE_USER@$REMOTE_IP..."
     log "If this hangs, please run 'ssh-copy-id $REMOTE_USER@$REMOTE_IP' manually from the terminal."
-    # We run it with a timeout to prevent permanent hang during initialization
-    sudo -u $USERNAME timeout 10s ssh-copy-id -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_IP" || log "Warning: ssh-copy-id timed out or failed. Manual setup may be required."
+    sudo -u $USERNAME timeout 10s ssh-copy-id -i /data/user_ssh_keys/id_ed25519.pub -o StrictHostKeyChecking=no "$REMOTE_USER@$REMOTE_IP" || log "Warning: ssh-copy-id timed out or failed. Manual setup may be required."
     
     # Install Rust for user with persistent storage
     log "Installing Rust..."
