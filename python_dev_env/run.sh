@@ -314,7 +314,13 @@ if [ ! -d "/home/$USERNAME/.local/share/zinit" ]; then
     mkdir -p /data/rust_cargo
     chown $USERNAME:$USERNAME /data/rust_cargo
 
-    sudo -u $USERNAME bash -c 'export RUSTUP_HOME="/data/rust_cargo/rustup" CARGO_HOME="/data/rust_cargo/cargo" && curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
+    if [ -f "/data/rust_cargo/cargo/bin/rustup" ]; then
+        log "Rust already installed, updating..."
+        sudo -u $USERNAME bash -c 'export RUSTUP_HOME="/data/rust_cargo/rustup" CARGO_HOME="/data/rust_cargo/cargo" PATH="/data/rust_cargo/cargo/bin:$PATH" && rustup update' || \
+            log "Warning: Failed to update Rust (continuing)"
+    else
+        sudo -u $USERNAME bash -c 'export RUSTUP_HOME="/data/rust_cargo/rustup" CARGO_HOME="/data/rust_cargo/cargo" && curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
+    fi
 
     # Install Go with persistent GOPATH
     log "Installing Go..."
