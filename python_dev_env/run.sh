@@ -208,7 +208,7 @@ if [ ! -d "/home/$USERNAME/.local/share/zinit" ]; then
 
     # Install OpenChamber for user
     log "Installing OpenChamber for user..."
-    if ! sudo -u $USERNAME bash -c 'curl -fsSL https://raw.githubusercontent.com/btriapitsyn/openchamber/main/scripts/install.sh | bash'; then
+    if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && curl -fsSL https://raw.githubusercontent.com/btriapitsyn/openchamber/main/scripts/install.sh | bash'; then
         log "Warning: Failed to install OpenChamber (continuing)"
     fi
 
