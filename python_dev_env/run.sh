@@ -186,7 +186,17 @@ if [ ! -d "/home/$USERNAME/.local/share/zinit" ]; then
         log "Warning: Failed to install Claude CLI (continuing)"
     fi
 
-    # Install Codex CLI for user
+    # Install Bun for user (needed by Codex CLI)
+    log "Installing Bun for user..."
+    if ! sudo -u $USERNAME bash -c 'curl -fsSL https://bun.sh/install | bash'; then
+        log "Warning: Failed to install Bun (continuing)"
+    fi
+
+    echo 'export BUN_INSTALL="$HOME/.bun"' >> /home/$USERNAME/.zshrc
+    echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> /home/$USERNAME/.zshrc
+    echo 'export BUN_INSTALL="$HOME/.bun"' >> /home/$USERNAME/.bashrc
+    echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> /home/$USERNAME/.bashrc
+
     log "Installing Codex CLI for user..."
     if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @openai/codex@latest'; then
         log "Warning: Failed to install Codex CLI (continuing)"
@@ -230,11 +240,158 @@ if [ ! -d "/home/$USERNAME/.local/share/zinit" ]; then
         log "Warning: Failed to install git-ai-commit (continuing)"
     fi
 
+    # Add git-ai-commit alias
+    echo 'alias gac="git-ai-commit"' >> /home/$USERNAME/.zshrc
+    echo 'alias gac="git-ai-commit"' >> /home/$USERNAME/.bashrc
+
+    # Add comprehensive git aliases (oh-my-zsh style)
+    cat >> /home/$USERNAME/.aliases << 'GITALIASES'
+
+# Git aliases (oh-my-zsh style)
+alias gst="git status"
+alias gss="git status -s"
+alias gaa="git add --all"
+alias gapa="git add --patch"
+alias gcam="git commit -a -m"
+alias gca="git commit -a"
+alias gc!="git commit --amend"
+alias gca!="git commit -a --amend"
+alias gcn!="git commit --amend --no-edit"
+alias gcan!="git commit -a --amend --no-edit"
+alias gcmsg="git commit -m"
+alias gco="git checkout"
+alias gcb="git checkout -b"
+alias gcd="git checkout develop"
+alias gcm="git checkout main || git checkout master"
+alias gcp="git cherry-pick"
+alias gcpa="git cherry-pick --abort"
+alias gcpc="git cherry-pick --continue"
+alias gd="git diff"
+alias gds="git diff --staged"
+alias gdw="git diff --word-diff"
+alias gf="git fetch"
+alias gfa="git fetch --all --prune"
+alias gfo="git fetch origin"
+alias gl="git pull"
+alias gpr="git pull --rebase"
+alias gpra="git pull --rebase --autostash"
+alias gp="git push"
+alias gpf="git push --force-with-lease"
+alias gpf!="git push --force"
+alias gpoat="git push origin --all && git push origin --tags"
+alias gpu="git push -u origin HEAD"
+alias gb="git branch"
+alias gba="git branch -a"
+alias gbd="git branch -d"
+alias gbD="git branch -D"
+alias gbr="git branch -r"
+alias gbnm="git branch --no-merged"
+alias gm="git merge"
+alias gma="git merge --abort"
+alias gmc="git merge --continue"
+alias grb="git rebase"
+alias grba="git rebase --abort"
+alias grbc="git rebase --continue"
+alias grbi="git rebase -i"
+alias grbm="git rebase main || git rebase master"
+alias grbd="git rebase develop"
+alias grbs="git rebase --skip"
+alias grs="git restore"
+alias grss="git restore --staged"
+alias grst="git reset"
+alias grsth="git reset --hard"
+alias grstsh="git reset --soft HEAD~1"
+alias gsta="git stash"
+alias gstaa="git stash apply"
+alias gstd="git stash drop"
+alias gstl="git stash list"
+alias gstp="git stash pop"
+alias gsts="git stash show --text"
+alias gstc="git stash clear"
+alias glog="git log --oneline --graph --decorate"
+alias gloga="git log --oneline --graph --decorate --all"
+alias glo="git log --oneline"
+alias glol="git log --graph --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%ar) %C(bold blue)<%an>%Creset'"
+alias glola="git log --graph --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%ar) %C(bold blue)<%an>%Creset' --all"
+alias gt="git tag"
+alias gta="git tag -a"
+alias gtd="git tag -d"
+alias gtl="git tag -l"
+alias gts="git tag -s"
+alias gtv="git tag | sort -V"
+alias gsh="git show"
+alias gsw="git switch"
+alias gswc="git switch -c"
+alias gswd="git switch develop"
+alias gswm="git switch main || git switch master"
+alias gbl="git blame -b -w"
+alias gcl="git clone --recurse-submodules"
+alias gclean="git clean -id"
+alias gcf="git config --list"
+alias gdct='git describe --tags $(git rev-list --tags --max-count=1)'
+alias gdt="git diff-tree --no-commit-id --name-only -r"
+alias gdnolock="git diff $@ -- . ':(exclude)package-lock.json' ':(exclude)*.lock'"
+alias gdup="git diff @{upstream}"
+alias gfg="git ls-files | grep"
+alias gg="git gui citool"
+alias gga="git gui citool --amend"
+alias ghh="git help"
+alias glg="git log --stat"
+alias glgp="git log --stat -p"
+alias glgg="git log --graph"
+alias glgga="git log --graph --decorate --all"
+alias glgm="git log --graph --max-count=10"
+alias glods="git log --graph --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%ad) %C(bold blue)<%an>%Creset' --date=short"
+alias gcount="git shortlog -sn"
+alias grev="git revert"
+alias grh="git reset"
+alias grhh="git reset --hard"
+alias grhk="git reset --keep"
+alias grhs="git reset --soft"
+alias groh='git reset origin/$(git branch --show-current) --hard'
+alias gru="git reset --"
+alias grup="git remote update"
+alias grv="git remote -v"
+alias gsb="git status -sb"
+alias gsd="git svn dcommit"
+alias gsr="git svn rebase"
+alias gsi="git submodule init"
+alias gsu="git submodule update"
+alias gpsup='git push --set-upstream origin $(git branch --show-current)'
+alias ghp="git help"
+alias gwch="git whatchanged -p --abbrev-commit --pretty=medium"
+alias gwt="git worktree"
+alias gwta="git worktree add"
+alias gwtls="git worktree list"
+alias gwtmv="git worktree move"
+alias gwtrm="git worktree remove"
+alias gam="git am"
+alias gamc="git am --continue"
+alias gams="git am --skip"
+alias gama="git am --abort"
+alias gap="git apply"
+alias gapt="git apply --3way"
+alias gbs="git bisect"
+alias gbsb="git bisect bad"
+alias gbsg="git bisect good"
+alias gbsn="git bisect new"
+alias gbso="git bisect old"
+alias gbsr="git bisect reset"
+alias gbss="git bisect start"
+alias gwip='git add -A && git rm $(git ls-files --deleted) 2>/dev/null; git commit --no-verify -m "WIP [skip ci]"'
+alias gunwip="git log -1 --pretty=%B | grep -q 'WIP' && git reset HEAD~1"
+alias gignore="git update-index --assume-unchanged"
+alias gunignore="git update-index --no-assume-unchanged"
+alias gignored="git ls-files -v | grep '^[[:lower:]]'"
+alias gpristine="git reset --hard && git clean -dffx"
+GITALIASES
+
     # Install Bun for user
     log "Installing Bun for user..."
     if ! sudo -u $USERNAME bash -c 'curl -fsSL https://bun.sh/install | bash'; then
         log "Warning: Failed to install Bun (continuing)"
     fi
+
 
     # Install uv for user
     log "Installing uv for user..."
