@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.11] - 2026-02-15
+
+### Added
+- npm 전역 패키지 자동 설치: `config.yaml`의 패키지 목록을 컨테이너 시작 시 자동 설치
+- OpenClaw 게이트웨이 서비스: 포트 18789 외부 노출 및 supervisor 서비스 등록
+- SSH 설정 지속성 개선: `/data/ssh_config` → `~/.ssh/config` 영구 저장
+
+### Changed
+- Shell 환경 설정 rootfs 기반 모듈화 적용: 설정 파일을 `rootfs/` 구조로 분리
+- 복잡한 git 별칭을 셸 함수로 변환: 인자 처리가 필요한 alias를 function으로 리팩터링
+
+### Fixed
+- Bun 설치를 Codex CLI 앞으로 이동하여 의존성 순서 해결
+- 기존 Rust 설치 시 `rustup update` 사용하여 재설치 충돌 방지
+- `ssh-copy-id` 전에 사용자 SSH 키 생성하도록 순서 변경
+- OpenChamber 설치 시 NVM 소싱 누락 문제 해결
+
 ## [1.2.10] - 2026-02-06
 
 ### Added
