@@ -507,6 +507,20 @@ GITALIASES
     log "User environment setup completed"
 fi
 
+log "Ensuring npm global packages are available..."
+set +e
+FAIL_OK=1
+sudo -u $USERNAME bash -c '
+    source /opt/nvm/nvm.sh
+    nvm use default >/dev/null 2>&1 || nvm use --delete-prefix default --silent >/dev/null 2>&1
+
+    command -v codex >/dev/null 2>&1 || npm install -g @openai/codex@latest
+    command -v openclaw >/dev/null 2>&1 || npm install -g openclaw@latest
+    command -v git-ai-commit >/dev/null 2>&1 || npm install -g @ksw8954/git-ai-commit
+' || log "Warning: Failed to ensure npm global packages"
+set -e
+FAIL_OK=0
+
 if [ -n "$GIT_NAME" ] || [ -n "$GIT_EMAIL" ]; then
     log "Applying configured git identity..."
     configure_git_identity "$USERNAME" "$USERNAME user"
