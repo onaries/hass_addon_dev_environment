@@ -4,6 +4,9 @@ set -e
 set -o pipefail
 FAIL_OK=0
 
+# Ensure HOME is set (HA addon containers may not set it)
+export HOME="${HOME:-/root}"
+
 # Emit failing command before exiting to help diagnose unexpected shutdowns
 trap 'STATUS=$?; CMD=${BASH_COMMAND}; if [ "$FAIL_OK" = "1" ]; then log "Warning: command \"$CMD\" failed with status $STATUS (suppressed)"; else log "FATAL: command \"$CMD\" exited with status $STATUS"; exit $STATUS; fi' ERR
 
@@ -36,7 +39,7 @@ configure_git_identity() {
     if [ "$target_user" = "root" ]; then
         run_cmd=""
     else
-        run_cmd="sudo -u $target_user"
+        run_cmd="sudo -H -u $target_user"
     fi
 
     if [ -n "$GIT_NAME" ]; then
@@ -530,7 +533,7 @@ else
 fi
 
 log "Configuring git to use SSH for GitHub..."
-sudo -u $USERNAME git config --global url."git@github.com:".insteadOf "https://github.com/"
+sudo -H -u $USERNAME git config --global url."git@github.com:".insteadOf "https://github.com/"
 git config --global url."git@github.com:".insteadOf "https://github.com/"
 
 echo 'source /etc/shell/env.sh' >> /root/.zshrc
