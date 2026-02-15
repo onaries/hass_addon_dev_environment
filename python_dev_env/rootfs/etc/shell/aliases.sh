@@ -1,6 +1,13 @@
 alias vim="nvim"
 alias vi="nvim"
 
+# Use lsd instead of ls
+alias ls="lsd"
+alias ll="lsd -l"
+alias la="lsd -la"
+alias lt="lsd --tree"
+alias l="lsd -lah"
+
 alias ccc="claude --dangerously-skip-permissions"
 
 alias codex-update="source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @openai/codex@latest"
