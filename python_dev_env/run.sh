@@ -856,6 +856,16 @@ fi
 sudo -u $USERNAME ln -sf /data/user_ssh_keys/id_ed25519 /home/$USERNAME/.ssh/id_ed25519
 sudo -u $USERNAME ln -sf /data/user_ssh_keys/id_ed25519.pub /home/$USERNAME/.ssh/id_ed25519.pub
 
+# Persist SSH config file
+if [ -f "/home/$USERNAME/.ssh/config" ] && [ ! -L "/home/$USERNAME/.ssh/config" ]; then
+    cp /home/$USERNAME/.ssh/config /data/user_ssh_keys/config
+fi
+if [ -f "/data/user_ssh_keys/config" ]; then
+    sudo -u $USERNAME ln -sf /data/user_ssh_keys/config /home/$USERNAME/.ssh/config
+    chmod 600 /data/user_ssh_keys/config
+    log "Restored persistent SSH config"
+fi
+
 # Pre-add known SSH hosts to avoid interactive prompts during git operations
 log "Adding known SSH hosts..."
 mkdir -p /data/user_ssh_keys/known_hosts.d
@@ -915,6 +925,25 @@ stderr_logfile=/var/log/supervisor/cliproxyapi_err.log
 priority=30
 EOF
     log "CLIProxyAPI added to supervisor"
+fi
+
+OPENCLAW_BIN=$(sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && which openclaw 2>/dev/null')
+if [ -n "$OPENCLAW_BIN" ]; then
+    OPENCLAW_NODE_DIR=$(dirname "$OPENCLAW_BIN")
+    cat >> /etc/supervisor/conf.d/services.conf << EOF
+
+[program:openclaw]
+command=$OPENCLAW_BIN gateway --port 18789
+directory=/home/$USERNAME
+environment=HOME="/home/$USERNAME",USER="$USERNAME",PATH="$OPENCLAW_NODE_DIR:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",XDG_CONFIG_HOME="/home/$USERNAME/.config",XDG_DATA_HOME="/home/$USERNAME/.local/share"
+user=$USERNAME
+autostart=true
+autorestart=true
+stdout_logfile=/var/log/supervisor/openclaw.log
+stderr_logfile=/var/log/supervisor/openclaw_err.log
+priority=40
+EOF
+    log "OpenClaw gateway added to supervisor (port 18789)"
 fi
 
 log "Starting services via supervisord..."
