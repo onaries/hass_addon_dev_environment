@@ -146,7 +146,7 @@ if [ ! -d "/data/user_local/share/zinit" ]; then
     chown $USERNAME:$USERNAME /home/$USERNAME/.ssh
 
     log "Setting up zsh with Zinit..."
-    if ! sudo -u $USERNAME bash -c 'curl -fsSL https://gist.githubusercontent.com/onaries/7ccb745f920f31cdda03850a9a431d2a/raw/setup-zsh.sh | bash'; then
+    if ! sudo -H -u $USERNAME bash -c '/usr/local/bin/setup-zsh.sh'; then
         log "Warning: Failed to setup zsh configuration (continuing)"
     fi
 
@@ -154,17 +154,6 @@ if [ ! -d "/data/user_local/share/zinit" ]; then
     log "Installing LazyVim for user..."
     sudo -u $USERNAME git clone https://github.com/LazyVim/starter /home/$USERNAME/.config/nvim
     sudo -u $USERNAME rm -rf /home/$USERNAME/.config/nvim/.git
-
-    echo 'source /etc/shell/env.sh' >> /home/$USERNAME/.zshrc
-    echo 'source /etc/shell/aliases.sh' >> /home/$USERNAME/.zshrc
-    echo 'source /etc/shell/zsh-extra.sh' >> /home/$USERNAME/.zshrc
-    echo 'source /etc/shell/env.sh' >> /home/$USERNAME/.bashrc
-    echo 'source /etc/shell/aliases.sh' >> /home/$USERNAME/.bashrc
-
-    if [ -n "$DOCKER_SOCK" ]; then
-        echo "export DOCKER_HOST=unix://$DOCKER_SOCK" >> /home/$USERNAME/.zshrc
-        echo "export DOCKER_HOST=unix://$DOCKER_SOCK" >> /home/$USERNAME/.bashrc
-    fi
 
     # Install Node.js LTS for user
     log "Installing Node.js LTS for user..."
@@ -194,11 +183,6 @@ if [ ! -d "/data/user_local/share/zinit" ]; then
     if ! sudo -u $USERNAME bash -c 'curl -fsSL https://bun.sh/install | bash'; then
         log "Warning: Failed to install Bun (continuing)"
     fi
-
-    echo 'export BUN_INSTALL="$HOME/.bun"' >> /home/$USERNAME/.zshrc
-    echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> /home/$USERNAME/.zshrc
-    echo 'export BUN_INSTALL="$HOME/.bun"' >> /home/$USERNAME/.bashrc
-    echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> /home/$USERNAME/.bashrc
 
     log "Installing Codex CLI for user..."
     if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @openai/codex@latest'; then
@@ -242,10 +226,6 @@ if [ ! -d "/data/user_local/share/zinit" ]; then
     if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @ksw8954/git-ai-commit'; then
         log "Warning: Failed to install git-ai-commit (continuing)"
     fi
-
-    # Add git-ai-commit alias
-    echo 'alias gac="git-ai-commit"' >> /home/$USERNAME/.zshrc
-    echo 'alias gac="git-ai-commit"' >> /home/$USERNAME/.bashrc
 
     # Add comprehensive git aliases (oh-my-zsh style)
     cat >> /home/$USERNAME/.aliases << 'GITALIASES'
@@ -513,13 +493,6 @@ GITALIASES
     fi
 
     chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
-    chown $USERNAME:$USERNAME /home/$USERNAME/.zshrc /home/$USERNAME/.bashrc
-
-    # Persist shell config files to /data/ for subsequent runs
-    log "Persisting shell config files..."
-    cp /home/$USERNAME/.zshrc /data/user_zshrc
-    cp /home/$USERNAME/.bashrc /data/user_bashrc
-    chown $USERNAME:$USERNAME /data/user_zshrc /data/user_bashrc
 
     # Re-enable exit on error for critical sections
     set -e
@@ -527,58 +500,13 @@ GITALIASES
     log "User environment setup completed"
 fi
 
-# Restore or regenerate shell config files
+# Restore shell config from persistent storage, or regenerate via setup-zsh.sh
 if [ -f "/data/user_zshrc" ]; then
     ln -sf /data/user_zshrc /home/$USERNAME/.zshrc
+    ln -sf /data/user_bashrc /home/$USERNAME/.bashrc 2>/dev/null || true
 else
-    # Existing environment without persisted .zshrc — regenerate essential config
-    log "Regenerating .zshrc from existing zinit environment..."
-    sudo -u $USERNAME bash -c "cat > /home/$USERNAME/.zshrc" << 'ZSHRC_EOF'
-# Zinit bootstrap
-ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
-if [ -f "${ZINIT_HOME}/zinit.zsh" ]; then
-    source "${ZINIT_HOME}/zinit.zsh"
-    zinit light zsh-users/zsh-completions
-    zinit light zsh-users/zsh-autosuggestions
-    zinit light zdharma-continuum/fast-syntax-highlighting
-    zinit light joshskidmore/zsh-fzf-history-search
-fi
-
-source /etc/shell/env.sh
-source /etc/shell/aliases.sh
-source /etc/shell/zsh-extra.sh
-
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-alias gac="git-ai-commit"
-ZSHRC_EOF
-    if [ -n "$DOCKER_SOCK" ]; then
-        echo "export DOCKER_HOST=unix://$DOCKER_SOCK" >> /home/$USERNAME/.zshrc
-    fi
-    chown $USERNAME:$USERNAME /home/$USERNAME/.zshrc
-    cp /home/$USERNAME/.zshrc /data/user_zshrc
-    chown $USERNAME:$USERNAME /data/user_zshrc
-    ln -sf /data/user_zshrc /home/$USERNAME/.zshrc
-fi
-if [ -f "/data/user_bashrc" ]; then
-    ln -sf /data/user_bashrc /home/$USERNAME/.bashrc
-else
-    log "Regenerating .bashrc..."
-    sudo -u $USERNAME bash -c "cat > /home/$USERNAME/.bashrc" << 'BASHRC_EOF'
-source /etc/shell/env.sh
-source /etc/shell/aliases.sh
-
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-alias gac="git-ai-commit"
-BASHRC_EOF
-    if [ -n "$DOCKER_SOCK" ]; then
-        echo "export DOCKER_HOST=unix://$DOCKER_SOCK" >> /home/$USERNAME/.bashrc
-    fi
-    chown $USERNAME:$USERNAME /home/$USERNAME/.bashrc
-    cp /home/$USERNAME/.bashrc /data/user_bashrc
-    chown $USERNAME:$USERNAME /data/user_bashrc
-    ln -sf /data/user_bashrc /home/$USERNAME/.bashrc
+    log "No persisted shell config found — running setup-zsh.sh..."
+    sudo -H -u $USERNAME bash -c '/usr/local/bin/setup-zsh.sh --force' || log "Warning: setup-zsh.sh failed"
 fi
 
 log "Ensuring npm global packages are available..."
