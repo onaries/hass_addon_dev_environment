@@ -1,7 +1,8 @@
 #!/bin/bash
 # ZSH + Zinit Setup Script for hass-addon-dev-environment
+# 매 컨테이너 시작 시 실행되어 항상 최신 설정을 적용합니다.
 # Usage: setup-zsh.sh [--force]
-#   --force: 기존 .zshrc를 백업 후 재생성
+#   --force: zinit도 재설치
 
 set -euo pipefail
 
@@ -14,7 +15,6 @@ NC='\033[0m'
 print_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
 print_success() { echo -e "${GREEN}[OK]${NC} $1"; }
 print_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 print_skip() { echo -e "${YELLOW}[SKIP]${NC} $1 (already exists)"; }
 
 FORCE=false
@@ -43,11 +43,6 @@ install_zinit() {
 # ============================================================================
 setup_theme() {
     local theme_file="$HOME/.zsh-themes/td.zsh-theme"
-
-    if [ -f "$theme_file" ] && [ "$FORCE" = false ]; then
-        print_skip "Theme ($theme_file)"
-        return
-    fi
 
     print_info "Creating zsh theme..."
     mkdir -p "$HOME/.zsh-themes"
@@ -88,51 +83,27 @@ THEME_EOF
 # 3. Setup .zshenv
 # ============================================================================
 setup_zshenv() {
-    print_info "Updating ~/.zshenv..."
-    touch "$HOME/.zshenv"
-    local added=0
+    print_info "Generating ~/.zshenv..."
 
-    declare -a env_lines=(
-        'export PATH="$HOME/bin:/usr/local/bin:$PATH"'
-        'export PATH="$HOME/.local/bin:$PATH"'
-        'export PATH="$HOME/.cargo/bin:$PATH"'
-        'export XDG_CONFIG_HOME="$HOME/.config"'
-        'export XDG_CACHE_HOME="$HOME/.cache"'
-        'export XDG_DATA_HOME="$HOME/.local/share"'
-        'export XDG_STATE_HOME="$HOME/.local/state"'
-    )
+    cat > "$HOME/.zshenv" << 'ZSHENV_EOF'
+export PATH="$HOME/bin:/usr/local/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.cargo/bin:$PATH"
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_CACHE_HOME="$HOME/.cache"
+export XDG_DATA_HOME="$HOME/.local/share"
+export XDG_STATE_HOME="$HOME/.local/state"
+export EDITOR="nvim"
+export VISUAL="nvim"
+ZSHENV_EOF
 
-    for line in "${env_lines[@]}"; do
-        if ! grep -qF "$line" "$HOME/.zshenv" 2>/dev/null; then
-            echo "$line" >> "$HOME/.zshenv"
-            added=$((added + 1))
-        fi
-    done
-
-    if ! grep -q 'EDITOR=' "$HOME/.zshenv" 2>/dev/null; then
-        echo 'export EDITOR="nvim"' >> "$HOME/.zshenv"
-        echo 'export VISUAL="nvim"' >> "$HOME/.zshenv"
-        added=$((added + 2))
-    fi
-
-    [ $added -gt 0 ] && print_success "Added $added entries to ~/.zshenv" || print_skip "~/.zshenv"
+    print_success ".zshenv generated"
 }
 
 # ============================================================================
-# 4. Generate .zshrc
+# 4. Generate .zshrc (always regenerated)
 # ============================================================================
 setup_zshrc() {
-    if [ -f "$HOME/.zshrc" ] && grep -q "ZINIT_HOME" "$HOME/.zshrc" 2>/dev/null && [ "$FORCE" = false ]; then
-        print_skip ".zshrc (zinit config already present)"
-        return
-    fi
-
-    if [ -f "$HOME/.zshrc" ] && [ "$FORCE" = true ]; then
-        local backup="$HOME/.zshrc.bak.$(date +%Y%m%d_%H%M%S)"
-        cp "$HOME/.zshrc" "$backup"
-        print_info "Backed up .zshrc to $backup"
-    fi
-
     print_info "Generating ~/.zshrc..."
 
     cat > "$HOME/.zshrc" << 'ZSHRC_EOF'
@@ -227,19 +198,28 @@ ZSHRC_EOF
 }
 
 # ============================================================================
-# 5. Persist to /data/ (addon persistent storage)
+# 5. Generate .bashrc (always regenerated)
 # ============================================================================
-persist_config() {
-    if [ -d "/data" ]; then
-        print_info "Persisting shell configs to /data/..."
-        cp "$HOME/.zshrc" /data/user_zshrc
-        cp "$HOME/.bashrc" /data/user_bashrc 2>/dev/null || true
-        ln -sf /data/user_zshrc "$HOME/.zshrc"
-        ln -sf /data/user_bashrc "$HOME/.bashrc" 2>/dev/null || true
-        print_success "Configs persisted and symlinked"
-    else
-        print_warn "/data/ not found — skipping persistence (not running in addon?)"
+setup_bashrc() {
+    print_info "Generating ~/.bashrc..."
+
+    cat > "$HOME/.bashrc" << 'BASHRC_EOF'
+source /etc/shell/env.sh 2>/dev/null || true
+source /etc/shell/aliases.sh 2>/dev/null || true
+
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+alias gac="git-ai-commit"
+BASHRC_EOF
+
+    # DOCKER_HOST (dynamic)
+    if [ -n "${DOCKER_HOST:-}" ]; then
+        echo "export DOCKER_HOST=\"$DOCKER_HOST\"" >> "$HOME/.bashrc"
+    elif [ -S /var/run/docker.sock ]; then
+        echo 'export DOCKER_HOST=unix:///var/run/docker.sock' >> "$HOME/.bashrc"
     fi
+
+    print_success ".bashrc generated"
 }
 
 # ============================================================================
@@ -256,7 +236,7 @@ main() {
     setup_theme
     setup_zshenv
     setup_zshrc
-    persist_config
+    setup_bashrc
 
     echo ""
     echo -e "${GREEN}============================================${NC}"

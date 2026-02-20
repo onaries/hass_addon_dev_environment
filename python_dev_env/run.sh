@@ -145,11 +145,6 @@ if [ ! -d "/data/user_local/share/zinit" ]; then
     chmod 700 /home/$USERNAME/.ssh
     chown $USERNAME:$USERNAME /home/$USERNAME/.ssh
 
-    log "Setting up zsh with Zinit..."
-    if ! sudo -H -u $USERNAME bash -c '/usr/local/bin/setup-zsh.sh'; then
-        log "Warning: Failed to setup zsh configuration (continuing)"
-    fi
-
     # Install LazyVim for user
     log "Installing LazyVim for user..."
     sudo -u $USERNAME git clone https://github.com/LazyVim/starter /home/$USERNAME/.config/nvim
@@ -500,14 +495,9 @@ GITALIASES
     log "User environment setup completed"
 fi
 
-# Restore shell config from persistent storage, or regenerate via setup-zsh.sh
-if [ -f "/data/user_zshrc" ]; then
-    ln -sf /data/user_zshrc /home/$USERNAME/.zshrc
-    ln -sf /data/user_bashrc /home/$USERNAME/.bashrc 2>/dev/null || true
-else
-    log "No persisted shell config found — running setup-zsh.sh..."
-    sudo -H -u $USERNAME bash -c '/usr/local/bin/setup-zsh.sh --force' || log "Warning: setup-zsh.sh failed"
-fi
+# Always regenerate shell config via setup-zsh.sh
+log "Setting up zsh/zinit configuration..."
+sudo -H -u $USERNAME bash -c '/usr/local/bin/setup-zsh.sh --force' || log "Warning: setup-zsh.sh failed"
 
 log "Ensuring npm global packages are available..."
 set +e
