@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.14] - 2026-02-20
+
+### Fixed
+
+- SSH authorized_keys 설정 시 `~/.ssh` 디렉토리 미존재로 인한 "No such file or directory" 오류 수정
+  - 첫 실행 블록 외부에서도 `mkdir -p`로 `.ssh` 디렉토리 생성 보장
+  - root 및 일반 사용자 모두에 대해 디렉토리 생성 및 권한(700) 설정 추가
+
 ## [1.2.13] - 2026-02-20
 
 ### Added

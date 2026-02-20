@@ -807,10 +807,15 @@ fi
 SSH_KEYS=$(jq -r '.ssh_keys[]? // empty' $CONFIG_PATH)
 if [ -n "$SSH_KEYS" ]; then
     log "Adding SSH keys for root..."
+    mkdir -p /root/.ssh
+    chmod 700 /root/.ssh
     echo "$SSH_KEYS" > /root/.ssh/authorized_keys
     chmod 600 /root/.ssh/authorized_keys
 
     log "Adding SSH keys for $USERNAME..."
+    mkdir -p /home/$USERNAME/.ssh
+    chmod 700 /home/$USERNAME/.ssh
+    chown $USERNAME:$USERNAME /home/$USERNAME/.ssh
     echo "$SSH_KEYS" > /home/$USERNAME/.ssh/authorized_keys
     chmod 600 /home/$USERNAME/.ssh/authorized_keys
     chown $USERNAME:$USERNAME /home/$USERNAME/.ssh/authorized_keys
