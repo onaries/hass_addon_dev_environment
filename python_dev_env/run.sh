@@ -753,6 +753,18 @@ if [ ! -L "/home/$USERNAME/.qwen" ]; then
     sudo -u $USERNAME ln -sf /data/qwen_config /home/$USERNAME/.qwen
 fi
 
+# Setup Bun persistent storage
+mkdir -p /data/bun_home
+chown $USERNAME:$USERNAME /data/bun_home
+
+if [ ! -L "/home/$USERNAME/.bun" ]; then
+    if [ -d "/home/$USERNAME/.bun" ]; then
+        sudo -u $USERNAME cp -r /home/$USERNAME/.bun/. /data/bun_home/ 2>/dev/null || true
+        rm -rf /home/$USERNAME/.bun
+    fi
+    sudo -u $USERNAME ln -sf /data/bun_home /home/$USERNAME/.bun
+fi
+
 # Setup user scripts persistent storage (synced via Syncthing)
 mkdir -p /data/user_scripts
 chown $USERNAME:$USERNAME /data/user_scripts
