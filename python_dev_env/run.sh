@@ -515,10 +515,70 @@ GITALIASES
     chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
     chown $USERNAME:$USERNAME /home/$USERNAME/.zshrc /home/$USERNAME/.bashrc
 
+    # Persist shell config files to /data/ for subsequent runs
+    log "Persisting shell config files..."
+    cp /home/$USERNAME/.zshrc /data/user_zshrc
+    cp /home/$USERNAME/.bashrc /data/user_bashrc
+    chown $USERNAME:$USERNAME /data/user_zshrc /data/user_bashrc
+
     # Re-enable exit on error for critical sections
     set -e
     FAIL_OK=0
     log "User environment setup completed"
+fi
+
+# Restore or regenerate shell config files
+if [ -f "/data/user_zshrc" ]; then
+    ln -sf /data/user_zshrc /home/$USERNAME/.zshrc
+else
+    # Existing environment without persisted .zshrc — regenerate essential config
+    log "Regenerating .zshrc from existing zinit environment..."
+    sudo -u $USERNAME bash -c "cat > /home/$USERNAME/.zshrc" << 'ZSHRC_EOF'
+# Zinit bootstrap
+ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
+if [ -f "${ZINIT_HOME}/zinit.zsh" ]; then
+    source "${ZINIT_HOME}/zinit.zsh"
+    zinit light zsh-users/zsh-completions
+    zinit light zsh-users/zsh-autosuggestions
+    zinit light zdharma-continuum/fast-syntax-highlighting
+    zinit light joshskidmore/zsh-fzf-history-search
+fi
+
+source /etc/shell/env.sh
+source /etc/shell/aliases.sh
+source /etc/shell/zsh-extra.sh
+
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+alias gac="git-ai-commit"
+ZSHRC_EOF
+    if [ -n "$DOCKER_SOCK" ]; then
+        echo "export DOCKER_HOST=unix://$DOCKER_SOCK" >> /home/$USERNAME/.zshrc
+    fi
+    chown $USERNAME:$USERNAME /home/$USERNAME/.zshrc
+    cp /home/$USERNAME/.zshrc /data/user_zshrc
+    chown $USERNAME:$USERNAME /data/user_zshrc
+    ln -sf /data/user_zshrc /home/$USERNAME/.zshrc
+fi
+if [ -f "/data/user_bashrc" ]; then
+    ln -sf /data/user_bashrc /home/$USERNAME/.bashrc
+else
+    log "Regenerating .bashrc..."
+    sudo -u $USERNAME bash -c "cat > /home/$USERNAME/.bashrc" << 'BASHRC_EOF'
+source /etc/shell/env.sh
+source /etc/shell/aliases.sh
+
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+alias gac="git-ai-commit"
+BASHRC_EOF
+    if [ -n "$DOCKER_SOCK" ]; then
+        echo "export DOCKER_HOST=unix://$DOCKER_SOCK" >> /home/$USERNAME/.bashrc
+    fi
+    chown $USERNAME:$USERNAME /home/$USERNAME/.bashrc
+    cp /home/$USERNAME/.bashrc /data/user_bashrc
+    chown $USERNAME:$USERNAME /data/user_bashrc
+    ln -sf /data/user_bashrc /home/$USERNAME/.bashrc
 fi
 
 log "Ensuring npm global packages are available..."
@@ -547,10 +607,10 @@ log "Configuring git to use SSH for GitHub..."
 sudo -H -u $USERNAME git config --global url."git@github.com:".insteadOf "https://github.com/"
 git config --global url."git@github.com:".insteadOf "https://github.com/"
 
-echo 'source /etc/shell/env.sh' >> /root/.zshrc
-echo 'source /etc/shell/aliases.sh' >> /root/.zshrc
-echo 'source /etc/shell/env.sh' >> /root/.bashrc
-echo 'source /etc/shell/aliases.sh' >> /root/.bashrc
+grep -q 'source /etc/shell/env.sh' /root/.zshrc 2>/dev/null || echo 'source /etc/shell/env.sh' >> /root/.zshrc
+grep -q 'source /etc/shell/aliases.sh' /root/.zshrc 2>/dev/null || echo 'source /etc/shell/aliases.sh' >> /root/.zshrc
+grep -q 'source /etc/shell/env.sh' /root/.bashrc 2>/dev/null || echo 'source /etc/shell/env.sh' >> /root/.bashrc
+grep -q 'source /etc/shell/aliases.sh' /root/.bashrc 2>/dev/null || echo 'source /etc/shell/aliases.sh' >> /root/.bashrc
 
 log "Configuring CLIProxyAPI..."
 CLIPROXY_DIR="/home/$USERNAME/cliproxyapi"
