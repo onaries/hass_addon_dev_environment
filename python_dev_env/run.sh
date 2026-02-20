@@ -528,9 +528,9 @@ sudo -u $USERNAME bash -c '
     source /opt/nvm/nvm.sh
     nvm use default >/dev/null 2>&1 || nvm use --delete-prefix default --silent >/dev/null 2>&1
 
-    command -v codex >/dev/null 2>&1 || npm install -g @openai/codex@latest
-    command -v openclaw >/dev/null 2>&1 || npm install -g openclaw@latest
-    command -v git-ai-commit >/dev/null 2>&1 || npm install -g @ksw8954/git-ai-commit
+    npm install -g @openai/codex@latest 2>/dev/null || true
+    npm install -g openclaw@latest 2>/dev/null || true
+    npm install -g @ksw8954/git-ai-commit@latest 2>/dev/null || true
 ' || log "Warning: Failed to ensure npm global packages"
 set -e
 FAIL_OK=0
