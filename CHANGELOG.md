@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.13] - 2026-02-20
+
+### Added
+
+- pre-commit 도구 설치 추가 (uv tool install)
+- Bun 런타임 영구 저장소 설정 (~/.bun → /data/bun_home)
+- GitHub Actions에 릴리즈 자동 생성 단계 추가 (태그 메시지 + 커밋 목록 포함)
+
+### Changed
+
+- 첫 실행 감지 경로를 /data/user_local/share/zinit으로 변경하여 컨테이너 업데이트 시 Claude Code 인증/설정 보존
+- npm 전역 패키지(codex, openclaw, git-ai-commit)를 매 시작 시 최신 버전으로 자동 업데이트
+
 ## [1.2.12] - 2026-02-15
 
 ### Fixed
