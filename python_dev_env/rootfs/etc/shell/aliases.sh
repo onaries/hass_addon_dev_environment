@@ -10,6 +10,23 @@ alias l="lsd -lah"
 
 alias ccc="claude --dangerously-skip-permissions"
 
+# Wrap claude to restore persistent symlinks after self-update
+claude() {
+    command claude "$@"
+    local rc=$?
+    if [ -d "/data/claude_config" ]; then
+        if [ ! -L "$HOME/.claude" ]; then
+            [ -d "$HOME/.claude" ] && cp -r "$HOME/.claude/." /data/claude_config/ 2>/dev/null && rm -rf "$HOME/.claude"
+            ln -sf /data/claude_config "$HOME/.claude"
+        fi
+        if [ ! -L "$HOME/.claude.json" ]; then
+            [ -f "$HOME/.claude.json" ] && mv "$HOME/.claude.json" /data/claude_config/ 2>/dev/null
+            ln -sf /data/claude_config/.claude.json "$HOME/.claude.json"
+        fi
+    fi
+    return $rc
+}
+
 alias codex-update="source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @openai/codex@latest"
 alias codex-yolo="codex --yolo"
 

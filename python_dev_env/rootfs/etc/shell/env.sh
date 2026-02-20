@@ -18,3 +18,15 @@ export GOPATH="/data/go_workspace"
 export PATH="/data/go_workspace/bin:$PATH"
 
 export GIT_TERMINAL_PROMPT=0
+
+# Restore Claude Code symlinks if broken by self-update
+if [ -d "/data/claude_config" ]; then
+    if [ ! -L "$HOME/.claude" ]; then
+        [ -d "$HOME/.claude" ] && cp -r "$HOME/.claude/." /data/claude_config/ 2>/dev/null && rm -rf "$HOME/.claude"
+        ln -sf /data/claude_config "$HOME/.claude"
+    fi
+    if [ ! -L "$HOME/.claude.json" ]; then
+        [ -f "$HOME/.claude.json" ] && mv "$HOME/.claude.json" /data/claude_config/ 2>/dev/null
+        ln -sf /data/claude_config/.claude.json "$HOME/.claude.json"
+    fi
+fi

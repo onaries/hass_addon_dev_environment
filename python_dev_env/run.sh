@@ -388,38 +388,6 @@ GITALIASES
         log "Warning: Failed to install zoxide (continuing)"
     fi
 
-    # Install GitUI
-    log "Installing GitUI..."
-    if curl -L https://github.com/gitui-org/gitui/releases/download/v0.27.0/gitui-linux-x86_64.tar.gz -o /tmp/gitui.tar.gz; then
-        if tar -xzf /tmp/gitui.tar.gz -C /tmp && mv /tmp/gitui /usr/local/bin/; then
-            chmod +x /usr/local/bin/gitui
-        else
-            log "Warning: Failed to install GitUI (tar/mv stage)"
-        fi
-        rm -f /tmp/gitui.tar.gz
-    else
-        log "Warning: Failed to download GitUI"
-    fi
-
-    log "Installing GitHub CLI..."
-    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-    chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-    apt update
-    apt install -y gh
-
-    log "Installing Just..."
-    JUST_VERSION=$(curl -s https://api.github.com/repos/casey/just/releases/latest | jq -r '.tag_name')
-    if [ -n "$JUST_VERSION" ]; then
-        curl -sSL "https://github.com/casey/just/releases/download/${JUST_VERSION}/just-${JUST_VERSION}-x86_64-unknown-linux-musl.tar.gz" | tar -xz -C /usr/local/bin just
-        chmod +x /usr/local/bin/just
-    else
-        log "Warning: Failed to fetch just version from GitHub"
-    fi
-
-    # Install act for running GitHub Actions locally
-    log "Installing act..."
-    curl -s https://raw.githubusercontent.com/nektos/act/master/install.sh | BINDIR=/usr/local/bin bash
 
     # Setup remote docker context: remote-arm64
     log "Configuring remote docker context: remote-arm64 (ubuntu@131.186.27.53)..."
@@ -468,17 +436,6 @@ GITALIASES
         sudo -u $USERNAME bash -c 'export RUSTUP_HOME="/data/rust_cargo/rustup" CARGO_HOME="/data/rust_cargo/cargo" && curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
     fi
 
-    # Install Go with persistent GOPATH
-    log "Installing Go..."
-    GO_VERSION="1.25.4"
-    wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -O /tmp/go.tar.gz
-    tar -C /usr/local -xzf /tmp/go.tar.gz
-    rm -f /tmp/go.tar.gz
-    
-    # Setup persistent GOPATH
-    mkdir -p /data/go_workspace
-    chown $USERNAME:$USERNAME /data/go_workspace
-    
     # Install Docker CLI for user (if not already available)
     if ! command -v docker >/dev/null 2>&1; then
         log "Installing Docker CLI..."
@@ -512,6 +469,96 @@ sudo -u $USERNAME bash -c '
 ' || log "Warning: Failed to ensure npm global packages"
 set -e
 FAIL_OK=0
+
+# Install GitUI if not present
+if ! command -v gitui >/dev/null 2>&1; then
+    log "Installing GitUI..."
+    set +e
+    FAIL_OK=1
+    ARCH=$(dpkg --print-architecture)
+    if [ "$ARCH" = "amd64" ]; then
+        GITUI_ARCH="x86_64"
+    elif [ "$ARCH" = "arm64" ]; then
+        GITUI_ARCH="aarch64"
+    fi
+    if [ -n "$GITUI_ARCH" ]; then
+        GITUI_VERSION=$(curl -s https://api.github.com/repos/gitui-org/gitui/releases/latest | jq -r '.tag_name // "v0.27.0"')
+        if curl -fsSL "https://github.com/gitui-org/gitui/releases/download/${GITUI_VERSION}/gitui-linux-${GITUI_ARCH}.tar.gz" -o /tmp/gitui.tar.gz; then
+            tar -xzf /tmp/gitui.tar.gz -C /tmp && mv /tmp/gitui /usr/local/bin/ && chmod +x /usr/local/bin/gitui
+        fi
+        rm -f /tmp/gitui.tar.gz
+    else
+        log "Warning: GitUI not available for architecture $ARCH"
+    fi
+    set -e
+    FAIL_OK=0
+fi
+
+# Install GitHub CLI if not present
+if ! command -v gh >/dev/null 2>&1; then
+    log "Installing GitHub CLI..."
+    set +e
+    FAIL_OK=1
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg 2>/dev/null
+    chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+    apt-get update -qq && apt-get install -y -qq gh
+    set -e
+    FAIL_OK=0
+fi
+
+# Install Just if not present
+if ! command -v just >/dev/null 2>&1; then
+    log "Installing Just..."
+    set +e
+    FAIL_OK=1
+    ARCH=$(dpkg --print-architecture)
+    if [ "$ARCH" = "amd64" ]; then
+        JUST_ARCH="x86_64-unknown-linux-musl"
+    elif [ "$ARCH" = "arm64" ]; then
+        JUST_ARCH="aarch64-unknown-linux-musl"
+    fi
+    if [ -n "$JUST_ARCH" ]; then
+        JUST_VERSION=$(curl -s https://api.github.com/repos/casey/just/releases/latest | jq -r '.tag_name // "1.36.0"')
+        curl -fsSL "https://github.com/casey/just/releases/download/${JUST_VERSION}/just-${JUST_VERSION}-${JUST_ARCH}.tar.gz" | tar -xz -C /usr/local/bin just
+        chmod +x /usr/local/bin/just
+    fi
+    set -e
+    FAIL_OK=0
+fi
+
+# Install act if not present
+if ! command -v act >/dev/null 2>&1; then
+    log "Installing act..."
+    set +e
+    FAIL_OK=1
+    curl -fsSL https://raw.githubusercontent.com/nektos/act/master/install.sh | BINDIR=/usr/local/bin bash
+    set -e
+    FAIL_OK=0
+fi
+
+# Install Go if not present
+if [ ! -d "/usr/local/go" ]; then
+    log "Installing Go..."
+    set +e
+    FAIL_OK=1
+    ARCH=$(dpkg --print-architecture)
+    GO_VERSION="1.25.4"
+    if [ "$ARCH" = "amd64" ]; then
+        GO_ARCH="amd64"
+    elif [ "$ARCH" = "arm64" ]; then
+        GO_ARCH="arm64"
+    fi
+    if [ -n "$GO_ARCH" ]; then
+        wget -q "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" -O /tmp/go.tar.gz
+        tar -C /usr/local -xzf /tmp/go.tar.gz
+        rm -f /tmp/go.tar.gz
+    fi
+    mkdir -p /data/go_workspace
+    chown $USERNAME:$USERNAME /data/go_workspace
+    set -e
+    FAIL_OK=0
+fi
 
 if [ -n "$GIT_NAME" ] || [ -n "$GIT_EMAIL" ]; then
     log "Applying configured git identity..."
