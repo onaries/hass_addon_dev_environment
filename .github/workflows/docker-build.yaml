@@ -31,16 +31,37 @@ jobs:
           username: ${{ env.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract version from tag
+      - name: Extract version and release info
         id: version
         run: |
           if [ -n "${{ github.event.inputs.tag }}" ]; then
-            VERSION="${{ github.event.inputs.tag }}"
+            TAG="${{ github.event.inputs.tag }}"
           else
-            VERSION="${GITHUB_REF#refs/tags/}"
+            TAG="${GITHUB_REF#refs/tags/}"
           fi
-          VERSION="${VERSION#v}"
+          VERSION="${TAG#v}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+          # Get annotated tag message (if any)
+          TAG_MSG=$(git tag -l --format='%(contents)' "$TAG" 2>/dev/null || true)
+
+          # Get previous tag for changelog
+          PREV_TAG=$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || echo "")
+
+          # Build release body
+          BODY=""
+          if [ -n "$TAG_MSG" ]; then
+            BODY="$TAG_MSG"$'\n\n'
+          fi
+          if [ -n "$PREV_TAG" ]; then
+            BODY="${BODY}## Changes since ${PREV_TAG}"$'\n\n'
+            BODY="${BODY}$(git log --pretty=format:'- %s (%h)' ${PREV_TAG}..${TAG})"$'\n\n'
+            BODY="${BODY}**Full diff**: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${TAG}"
+          fi
+
+          # Write to file to preserve multiline
+          echo "$BODY" > /tmp/release_body.md
 
       - name: Build and push
         uses: docker/build-push-action@v5
@@ -54,3 +75,13 @@ jobs:
             ${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          body_path: /tmp/release_body.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
