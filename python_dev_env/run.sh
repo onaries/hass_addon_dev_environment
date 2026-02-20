@@ -537,6 +537,76 @@ if ! command -v act >/dev/null 2>&1; then
     FAIL_OK=0
 fi
 
+# Install Claude CLI if not present
+if ! sudo -u $USERNAME bash -c 'command -v claude' >/dev/null 2>&1; then
+    log "Installing Claude CLI..."
+    set +e
+    FAIL_OK=1
+    sudo -u $USERNAME bash -c 'curl -fsSL https://claude.ai/install.sh | bash' || log "Warning: Failed to install Claude CLI"
+    set -e
+    FAIL_OK=0
+fi
+
+# Install uv if not present
+if ! sudo -u $USERNAME bash -c 'command -v uv' >/dev/null 2>&1; then
+    log "Installing uv..."
+    set +e
+    FAIL_OK=1
+    sudo -u $USERNAME bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh' || log "Warning: Failed to install uv"
+    set -e
+    FAIL_OK=0
+fi
+
+# Install pre-commit if not present
+if ! sudo -u $USERNAME bash -c 'command -v pre-commit' >/dev/null 2>&1; then
+    log "Installing pre-commit..."
+    set +e
+    FAIL_OK=1
+    sudo -u $USERNAME bash -c 'export PATH="$HOME/.local/bin:$PATH" && uv tool install pre-commit' || log "Warning: Failed to install pre-commit"
+    set -e
+    FAIL_OK=0
+fi
+
+# Install zoxide if not present
+if ! sudo -u $USERNAME bash -c 'command -v zoxide' >/dev/null 2>&1; then
+    log "Installing zoxide..."
+    set +e
+    FAIL_OK=1
+    sudo -u $USERNAME bash -c 'curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh' || log "Warning: Failed to install zoxide"
+    set -e
+    FAIL_OK=0
+fi
+
+# Install Fresh editor if not present
+if ! sudo -u $USERNAME bash -c 'command -v fresh' >/dev/null 2>&1; then
+    log "Installing Fresh editor..."
+    set +e
+    FAIL_OK=1
+    sudo -u $USERNAME bash -c 'curl -fsSL https://raw.githubusercontent.com/sinelaw/fresh/refs/heads/master/scripts/install.sh | sh' || log "Warning: Failed to install Fresh editor"
+    set -e
+    FAIL_OK=0
+fi
+
+# Install OpenChamber if not present
+if ! sudo -u $USERNAME bash -c 'command -v openchamber' >/dev/null 2>&1; then
+    log "Installing OpenChamber..."
+    set +e
+    FAIL_OK=1
+    sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && curl -fsSL https://raw.githubusercontent.com/btriapitsyn/openchamber/main/scripts/install.sh | bash' || log "Warning: Failed to install OpenChamber"
+    set -e
+    FAIL_OK=0
+fi
+
+# Install OpenCode if not present
+if ! sudo -u $USERNAME bash -c 'command -v opencode' >/dev/null 2>&1; then
+    log "Installing OpenCode..."
+    set +e
+    FAIL_OK=1
+    sudo -u $USERNAME bash -c 'curl -fsSL https://opencode.ai/install | bash' || log "Warning: Failed to install OpenCode"
+    set -e
+    FAIL_OK=0
+fi
+
 # Install Go if not present
 if [ ! -d "/usr/local/go" ]; then
     log "Installing Go..."
@@ -740,32 +810,40 @@ chown $USERNAME:$USERNAME /data/qwen_config
 # Create symlinks for Claude CLI configuration (user)
 if [ ! -L "/home/$USERNAME/.claude" ]; then
     if [ -d "/home/$USERNAME/.claude" ]; then
-        sudo -u $USERNAME cp -r /home/$USERNAME/.claude/. /data/claude_config/ 2>/dev/null || true
+        # Merge new files without overwriting existing auth/settings
+        sudo -u $USERNAME cp -rn /home/$USERNAME/.claude/. /data/claude_config/ 2>/dev/null || true
+        # Always update the binary
+        [ -d "/home/$USERNAME/.claude/local" ] && sudo -u $USERNAME cp -rf /home/$USERNAME/.claude/local /data/claude_config/ 2>/dev/null || true
         rm -rf /home/$USERNAME/.claude
     fi
     sudo -u $USERNAME ln -sf /data/claude_config /home/$USERNAME/.claude
 fi
 
-if [ ! -L "/home/$USERNAME/.claude.json" ] && [ -f "/home/$USERNAME/.claude.json" ]; then
-    sudo -u $USERNAME mv /home/$USERNAME/.claude.json /data/claude_config/
-fi
 if [ ! -L "/home/$USERNAME/.claude.json" ]; then
+    if [ -f "/home/$USERNAME/.claude.json" ] && [ ! -f "/data/claude_config/.claude.json" ]; then
+        sudo -u $USERNAME mv /home/$USERNAME/.claude.json /data/claude_config/
+    else
+        rm -f /home/$USERNAME/.claude.json 2>/dev/null
+    fi
     sudo -u $USERNAME ln -sf /data/claude_config/.claude.json /home/$USERNAME/.claude.json
 fi
 
 # Create symlinks for Claude CLI configuration (root)
 if [ ! -L "/root/.claude" ]; then
     if [ -d "/root/.claude" ]; then
-        cp -r /root/.claude/. /data/claude_config/ 2>/dev/null || true
+        cp -rn /root/.claude/. /data/claude_config/ 2>/dev/null || true
+        [ -d "/root/.claude/local" ] && cp -rf /root/.claude/local /data/claude_config/ 2>/dev/null || true
         rm -rf /root/.claude
     fi
     ln -sf /data/claude_config /root/.claude
 fi
 
-if [ ! -L "/root/.claude.json" ] && [ -f "/root/.claude.json" ]; then
-    mv /root/.claude.json /data/claude_config/
-fi
 if [ ! -L "/root/.claude.json" ]; then
+    if [ -f "/root/.claude.json" ] && [ ! -f "/data/claude_config/.claude.json" ]; then
+        mv /root/.claude.json /data/claude_config/
+    else
+        rm -f /root/.claude.json 2>/dev/null
+    fi
     ln -sf /data/claude_config/.claude.json /root/.claude.json
 fi
 

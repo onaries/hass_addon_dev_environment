@@ -16,11 +16,19 @@ claude() {
     local rc=$?
     if [ -d "/data/claude_config" ]; then
         if [ ! -L "$HOME/.claude" ]; then
-            [ -d "$HOME/.claude" ] && cp -r "$HOME/.claude/." /data/claude_config/ 2>/dev/null && rm -rf "$HOME/.claude"
+            if [ -d "$HOME/.claude" ]; then
+                cp -rn "$HOME/.claude/." /data/claude_config/ 2>/dev/null || true
+                [ -d "$HOME/.claude/local" ] && cp -rf "$HOME/.claude/local" /data/claude_config/ 2>/dev/null || true
+                rm -rf "$HOME/.claude"
+            fi
             ln -sf /data/claude_config "$HOME/.claude"
         fi
         if [ ! -L "$HOME/.claude.json" ]; then
-            [ -f "$HOME/.claude.json" ] && mv "$HOME/.claude.json" /data/claude_config/ 2>/dev/null
+            if [ -f "$HOME/.claude.json" ] && [ ! -f "/data/claude_config/.claude.json" ]; then
+                mv "$HOME/.claude.json" /data/claude_config/ 2>/dev/null
+            else
+                rm -f "$HOME/.claude.json" 2>/dev/null
+            fi
             ln -sf /data/claude_config/.claude.json "$HOME/.claude.json"
         fi
     fi
