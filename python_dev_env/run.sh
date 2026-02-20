@@ -132,8 +132,8 @@ chown -R $USERNAME:$USERNAME /opt/nvm 2>/dev/null || log "Warning: Failed to set
 echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME
 chmod 440 /etc/sudoers.d/$USERNAME
 
-# Setup user environment (only if user was just created)
-if [ ! -d "/home/$USERNAME/.local/share/zinit" ]; then
+# Setup user environment (only on first-ever run; check persistent storage)
+if [ ! -d "/data/user_local/share/zinit" ]; then
     log "Setting up user environment for $USERNAME (this may take a while)..."
 
     # Temporarily disable exit on error for non-critical setup
@@ -400,6 +400,17 @@ GITALIASES
     log "Installing uv for user..."
     if ! sudo -u $USERNAME bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh'; then
         log "Warning: Failed to install uv (continuing)"
+    fi
+
+    # Install pre-commit for user
+    log "Installing pre-commit for user..."
+    if ! sudo -u $USERNAME bash -c 'export PATH="$HOME/.local/bin:$PATH" && uv tool install pre-commit'; then
+        log "Warning: Failed to install pre-commit (continuing)"
+    fi
+
+    log "Installing zoxide for user..."
+    if ! sudo -u $USERNAME bash -c 'curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh'; then
+        log "Warning: Failed to install zoxide (continuing)"
     fi
 
     # Install GitUI

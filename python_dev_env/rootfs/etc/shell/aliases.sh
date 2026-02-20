@@ -95,9 +95,9 @@ alias gbl="git blame -b -w"
 alias gcl="git clone --recurse-submodules"
 alias gclean="git clean -id"
 alias gcf="git config --list"
-gdct() { git describe --tags "$(git rev-list --tags --max-count=1)"; }
+function gdct { git describe --tags "$(git rev-list --tags --max-count=1)"; }
 alias gdt="git diff-tree --no-commit-id --name-only -r"
-gdnolock() { git diff "$@" -- . ':(exclude)package-lock.json' ':(exclude)*.lock'; }
+function gdnolock { git diff "$@" -- . ':(exclude)package-lock.json' ':(exclude)*.lock'; }
 alias gdup="git diff @{upstream}"
 alias gfg="git ls-files | grep"
 alias gg="git gui citool"
@@ -115,7 +115,7 @@ alias grh="git reset"
 alias grhh="git reset --hard"
 alias grhk="git reset --keep"
 alias grhs="git reset --soft"
-groh() { git reset "origin/$(git branch --show-current)" --hard; }
+function groh { git reset "origin/$(git branch --show-current)" --hard; }
 alias gru="git reset --"
 alias grup="git remote update"
 alias grv="git remote -v"
@@ -124,7 +124,7 @@ alias gsd="git svn dcommit"
 alias gsr="git svn rebase"
 alias gsi="git submodule init"
 alias gsu="git submodule update"
-gpsup() { git push --set-upstream origin "$(git branch --show-current)"; }
+function gpsup { git push --set-upstream origin "$(git branch --show-current)"; }
 alias ghp="git help"
 alias gwch="git whatchanged -p --abbrev-commit --pretty=medium"
 alias gwt="git worktree"
@@ -145,7 +145,7 @@ alias gbsn="git bisect new"
 alias gbso="git bisect old"
 alias gbsr="git bisect reset"
 alias gbss="git bisect start"
-gwip() { git add -A && git rm $(git ls-files --deleted) 2>/dev/null; git commit --no-verify -m 'WIP [skip ci]'; }
+function gwip { git add -A && git rm $(git ls-files --deleted) 2>/dev/null; git commit --no-verify -m 'WIP [skip ci]'; }
 alias gunwip="git log -1 --pretty=%B | grep -q 'WIP' && git reset HEAD~1"
 alias gignore="git update-index --assume-unchanged"
 alias gunignore="git update-index --no-assume-unchanged"
