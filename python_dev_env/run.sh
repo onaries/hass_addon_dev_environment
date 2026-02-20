@@ -1032,7 +1032,7 @@ EOF
     log "CLIProxyAPI added to supervisor"
 fi
 
-OPENCLAW_BIN=$(sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && which openclaw 2>/dev/null')
+OPENCLAW_BIN=$(sudo -u $USERNAME bash -c 'cd /home/'"$USERNAME"' 2>/dev/null; source /opt/nvm/nvm.sh && which openclaw 2>/dev/null')
 if [ -n "$OPENCLAW_BIN" ]; then
     OPENCLAW_NODE_DIR=$(dirname "$OPENCLAW_BIN")
     cat >> /etc/supervisor/conf.d/services.conf << EOF
