@@ -1,36 +1,43 @@
 # Home Assistant Add-on: Multi-Language Development Environment
 
-![Supports aarch64 Architecture][aarch64-shield]
 ![Supports amd64 Architecture][amd64-shield]
-![Supports armhf Architecture][armhf-shield]
-![Supports armv7 Architecture][armv7-shield]
-![Supports i386 Architecture][i386-shield]
 
-A comprehensive multi-language development environment for Home Assistant with Python 3.13, Node.js, Rust, Go, AI tools, SSH access, modern shell (zsh + oh-my-zsh), Neovim with LazyVim, and essential development tools with persistent storage.
+A comprehensive multi-language development environment for Home Assistant with Python 3.11, Node.js, Rust, Go, AI tools, SSH access, modern shell (zsh + Zinit), Neovim with LazyVim, and essential development tools with persistent storage.
 
 ## About
 
 This add-on provides a full-featured multi-language development environment including:
 
 ### Programming Languages
-- **Python 3.11**: System Python version with package management tools
+- **Python 3.11**: System Python with uv package manager and pre-commit
 - **Node.js LTS**: Via nvm with persistent npm global packages
 - **Rust**: Latest stable with Cargo and persistent crates storage
-- **Go 1.21.5**: With persistent GOPATH and module cache
+- **Go 1.25**: With persistent GOPATH and module cache
+
+### AI Tools
+- **Claude CLI**: AI-powered development assistant (`ccc` alias for quick access)
+- **Codex CLI**: OpenAI Codex (`codex-yolo` alias)
+- **OpenCode**: AI coding assistant
+- **OpenChamber**: AI development tool
+- **OpenClaw**: AI gateway (port 18789)
+- **Qwen Code**: Alibaba AI assistant
+- **git-ai-commit**: AI-powered conventional commit generation (`gac` alias)
 
 ### Development Tools
-- **Claude CLI**: AI-powered development assistant with `ccc` alias
+- **Neovim + LazyVim**: Pre-configured modern editor
 - **GitUI**: Terminal-based Git interface
 - **Just**: Command runner for project automation
-- **Neovim + LazyVim**: Pre-configured modern editor
+- **act**: Run GitHub Actions locally
+- **gh**: GitHub CLI
 - **Docker CLI & Compose**: Container development support
+- **pre-commit**: Git hook framework
 
 ### Infrastructure
 - **SSH Access**: Secure remote access via configurable port with persistent keys
-- **Modern Shell**: zsh with oh-my-zsh configuration
-- **Terminal Multiplexer**: Zellij for session management
-- **Persistent Storage**: All configurations and packages survive rebuilds
-- **File Access**: Home Assistant config, addons, and shared directories
+- **Syncthing**: File synchronization (Web GUI port 8384)
+- **CLIProxyAPI**: API proxy service (port 8317)
+- **Modern Shell**: zsh + Zinit + 150+ git aliases (oh-my-zsh style)
+- **Terminal Tools**: zellij, tmux, ripgrep, delta, lsd, duf, mcfly, zoxide
 
 ## Important Setup Requirements
 
@@ -84,6 +91,34 @@ Set a password for the development user.
 user_password: "devpassword"
 ```
 
+### Option: `git_name` / `git_email`
+
+Configure git identity for commits.
+
+```yaml
+git_name: "Your Name"
+git_email: "you@example.com"
+```
+
+### Option: `cliproxy_api_keys`
+
+API keys for CLIProxyAPI service.
+
+```yaml
+cliproxy_api_keys:
+  - "your-api-key"
+```
+
+## Ports
+
+| Port | Service | Description |
+|------|---------|-------------|
+| 2322 | SSH | Configurable via `ssh_port` |
+| 8317 | CLIProxyAPI | API proxy service |
+| 8384 | Syncthing | Web GUI for file sync |
+| 18789 | OpenClaw | AI gateway |
+| 22000 | Syncthing | P2P file transfer (TCP/UDP) |
+
 ## Available Commands
 
 Once connected via SSH, you have access to:
@@ -92,38 +127,50 @@ Once connected via SSH, you have access to:
 # Programming Languages
 python3       # Python 3.11
 uv            # Ultra-fast Python package manager
+pre-commit    # Git hook framework
 node          # Node.js LTS
 npm           # Node package manager (persistent global packages)
 rustc         # Rust compiler
 cargo         # Rust package manager
 go            # Go programming language
 
+# AI Tools
+claude        # Claude CLI for AI assistance
+ccc           # Quick Claude access (--dangerously-skip-permissions)
+codex         # OpenAI Codex CLI
+opencode      # OpenCode AI assistant
+gac           # git-ai-commit (conventional commits)
+
 # Development Tools
 nvim          # Neovim with LazyVim
-vim           # Alias to nvim
-claude        # Claude CLI for AI assistance
-ccc           # Quick Claude access (alias)
 gitui         # Terminal-based Git UI
 just          # Command runner
+act           # Run GitHub Actions locally
+gh            # GitHub CLI
 docker        # Docker CLI
-docker-compose # Docker Compose
+docker compose # Docker Compose
 
 # Terminal Tools
-zellij        # Modern terminal multiplexer (amd64)
+zellij        # Modern terminal multiplexer
 tmux          # Traditional terminal multiplexer
-htop          # Process monitor
-tree          # Directory structure viewer
+rg            # ripgrep (fast search)
+delta         # Git diff viewer
+lsd           # Modern ls replacement
+mcfly         # Shell history search
+zoxide        # Smart directory jumper (z)
 ```
 
 ## Persistent Storage
 
-All user data is automatically preserved across container rebuilds:
+All user data is automatically preserved across container rebuilds and add-on updates:
 
 - **SSH Keys**: Both host keys and user SSH keys
 - **Configurations**: ~/.config, ~/.local directories
 - **Language Packages**: npm global, Cargo crates, Go modules
-- **Claude Settings**: Authentication and configuration
+- **AI Settings**: Claude Code (인증, 설정, 플러그인, statusbar), Codex, OpenClaw, Qwen
+- **Runtime**: Bun, uv tools (pre-commit 등)
 - **Development Workspace**: Your projects and files
+- **Shell History**: zoxide directory history
 
 ## Multi-Language Development Examples
 
@@ -157,9 +204,5 @@ Got questions?
 
 You could [open an issue here][issue] on GitHub.
 
-[aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
 [amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg
-[armhf-shield]: https://img.shields.io/badge/armhf-yes-green.svg
-[armv7-shield]: https://img.shields.io/badge/armv7-yes-green.svg
-[i386-shield]: https://img.shields.io/badge/i386-yes-green.svg
 [issue]: https://github.com/onaries/hass_addon_dev_environment/issues

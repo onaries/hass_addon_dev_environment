@@ -26,13 +26,23 @@ https://github.com/onaries/hass_addon_dev_environment
 
 ## Features
 
-- **Languages**: Python 3.11, Node.js LTS, Rust, Go
-- **AI Tools**: Claude CLI, Qwen Code
+- **Languages**: Python 3.11, Node.js LTS, Rust, Go 1.25
+- **AI Tools**: Claude CLI, Codex CLI, OpenCode, OpenChamber, OpenClaw, Qwen Code
 - **Editor**: Neovim + LazyVim
-- **Shell**: zsh + Zinit + fzf + autosuggestions
-- **Tools**: Docker CLI, GitUI, ripgrep, delta, lsd, mcfly
-- **Persistent**: SSH keys, configs, packages all survive rebuilds
-- **SSH**: Port 2322 (configurable)
+- **Shell**: zsh + Zinit + fzf + autosuggestions + 150+ git aliases
+- **Tools**: Docker CLI/Compose, GitUI, Just, act, gh, ripgrep, delta, lsd, mcfly, zoxide
+- **Infra**: Syncthing (파일 동기화), CLIProxyAPI, SSH (포트 2322)
+- **Persistent**: SSH keys, configs, packages, AI 인증 정보 모두 업데이트 후에도 보존
+
+## Ports
+
+| Port | Service |
+|------|---------|
+| 2322 | SSH |
+| 8317 | CLIProxyAPI |
+| 8384 | Syncthing Web GUI |
+| 18789 | OpenClaw Gateway |
+| 22000 | Syncthing P2P |
 
 ## Development
 
@@ -52,7 +62,7 @@ shellcheck python_dev_env/run.sh
 
 ## CI/CD
 
-Git tag push (`v*.*.*`) triggers GitHub Actions to build and push to Docker Hub:
+Git tag push (`v*.*.*`) triggers GitHub Actions to build and push to Docker Hub + create GitHub Release:
 
 ```
 ksw8954/python-dev-env:{version}
