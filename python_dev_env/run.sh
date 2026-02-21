@@ -456,6 +456,70 @@ fi
 log "Setting up zsh/zinit configuration..."
 sudo -H -u $USERNAME bash -c '/usr/local/bin/setup-zsh.sh --force' || log "Warning: setup-zsh.sh failed"
 
+# Install LazyVim if not present
+if [ ! -d "/home/$USERNAME/.config/nvim" ]; then
+    log "Installing LazyVim for user..."
+    set +e
+    FAIL_OK=1
+    sudo -u $USERNAME git clone https://github.com/LazyVim/starter /home/$USERNAME/.config/nvim
+    sudo -u $USERNAME rm -rf /home/$USERNAME/.config/nvim/.git
+    set -e
+    FAIL_OK=0
+fi
+
+# Install Node.js LTS if not present
+if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && node --version' >/dev/null 2>&1; then
+    log "Installing Node.js LTS..."
+    set +e
+    FAIL_OK=1
+    sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm install --lts && (nvm use --lts || nvm use --delete-prefix --lts --silent) && nvm alias default lts/*' || log "Warning: Failed to install Node.js LTS"
+    set -e
+    FAIL_OK=0
+fi
+
+# Install Bun if not present
+if ! sudo -u $USERNAME bash -c 'command -v bun' >/dev/null 2>&1; then
+    log "Installing Bun..."
+    set +e
+    FAIL_OK=1
+    sudo -u $USERNAME bash -c 'curl -fsSL https://bun.sh/install | bash' || log "Warning: Failed to install Bun"
+    set -e
+    FAIL_OK=0
+fi
+
+# Install Rust if not present
+if [ ! -f "/data/rust_cargo/cargo/bin/rustup" ]; then
+    log "Installing Rust..."
+    set +e
+    FAIL_OK=1
+    mkdir -p /data/rust_cargo
+    chown $USERNAME:$USERNAME /data/rust_cargo
+    sudo -u $USERNAME bash -c 'export RUSTUP_HOME="/data/rust_cargo/rustup" CARGO_HOME="/data/rust_cargo/cargo" && curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y' || log "Warning: Failed to install Rust"
+    set -e
+    FAIL_OK=0
+fi
+
+# Install Docker CLI if not present
+if ! command -v docker >/dev/null 2>&1; then
+    log "Installing Docker CLI..."
+    set +e
+    FAIL_OK=1
+    curl -fsSL https://get.docker.com -o /tmp/get-docker.sh && sh /tmp/get-docker.sh
+    rm -f /tmp/get-docker.sh
+    set -e
+    FAIL_OK=0
+fi
+
+# Install CLI Proxy API if not present
+if [ ! -d "/home/$USERNAME/cliproxyapi" ]; then
+    log "Installing CLI Proxy API..."
+    set +e
+    FAIL_OK=1
+    sudo -u $USERNAME bash -c 'curl -fsSL https://raw.githubusercontent.com/brokechubb/cliproxyapi-installer/refs/heads/master/cliproxyapi-installer | bash' || log "Warning: Failed to install CLI Proxy API"
+    set -e
+    FAIL_OK=0
+fi
+
 log "Ensuring npm global packages are available..."
 set +e
 FAIL_OK=1
