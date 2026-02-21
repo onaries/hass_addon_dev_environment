@@ -163,6 +163,7 @@ zinit for is-snippet OMZL::{compfix,completion,git,key-bindings}.zsh PZT::module
 zinit as"completion" for OMZP::{pip/_pip,terraform/_terraform}
 
 # Completion
+fpath=(~/.zsh/completions $fpath)
 autoload -Uz compinit && compinit
 zstyle ":completion:*" matcher-list "m:{a-zA-Z}={A-Za-z}"
 zstyle ":completion:*" menu select
@@ -185,6 +186,7 @@ source /etc/shell/zsh-extra.sh 2>/dev/null || true
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 alias gac="git-ai-commit"
+compdef gac=git-ai-commit 2>/dev/null
 ZSHRC_EOF
 
     # DOCKER_HOST (dynamic)
@@ -193,6 +195,21 @@ ZSHRC_EOF
     elif [ -S /var/run/docker.sock ]; then
         echo 'export DOCKER_HOST=unix:///var/run/docker.sock' >> "$HOME/.zshrc"
     fi
+
+    mkdir -p "$HOME/.zsh/completions"
+    command -v git-ai-commit >/dev/null 2>&1 && git-ai-commit completion zsh > "$HOME/.zsh/completions/_git-ai-commit" 2>/dev/null || true
+    command -v openclaw >/dev/null 2>&1 && openclaw completion -s zsh > "$HOME/.zsh/completions/_openclaw" 2>/dev/null || true
+    command -v opencode >/dev/null 2>&1 && opencode completion zsh > "$HOME/.zsh/completions/_opencode" 2>/dev/null || true
+    command -v gh >/dev/null 2>&1 && gh completion -s zsh > "$HOME/.zsh/completions/_gh" 2>/dev/null || true
+    command -v just >/dev/null 2>&1 && just --completions zsh > "$HOME/.zsh/completions/_just" 2>/dev/null || true
+    command -v docker >/dev/null 2>&1 && docker completion zsh > "$HOME/.zsh/completions/_docker" 2>/dev/null || true
+    command -v rustup >/dev/null 2>&1 && rustup completions zsh > "$HOME/.zsh/completions/_rustup" 2>/dev/null || true
+    command -v uv >/dev/null 2>&1 && uv generate-shell-completion zsh > "$HOME/.zsh/completions/_uv" 2>/dev/null || true
+    command -v zellij >/dev/null 2>&1 && zellij setup --generate-completion zsh > "$HOME/.zsh/completions/_zellij" 2>/dev/null || true
+    command -v delta >/dev/null 2>&1 && delta --generate-completion zsh > "$HOME/.zsh/completions/_delta" 2>/dev/null || true
+    command -v bun >/dev/null 2>&1 && bun completions zsh > "$HOME/.zsh/completions/_bun" 2>/dev/null || true
+    command -v codex >/dev/null 2>&1 && codex completion zsh > "$HOME/.zsh/completions/_codex" 2>/dev/null || true
+    command -v rg >/dev/null 2>&1 && rg --generate complete-zsh > "$HOME/.zsh/completions/_rg" 2>/dev/null || true
 
     print_success ".zshrc generated"
 }
