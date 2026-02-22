@@ -5,6 +5,71 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.22] - 2026-02-22
+
+### Added
+
+- fzf 바이너리 설치 추가 (Dockerfile, 아키텍처별 GitHub releases)
+- 주요 CLI 도구 zsh 탭 완성 자동 생성: git-ai-commit, openclaw, opencode, gh, just, docker, rustup, uv, zellij, delta, bun, codex, rg
+- `gac` alias에 `compdef gac=git-ai-commit` 완성 연결
+- mcfly init을 `zsh-extra.sh`에 추가하여 Ctrl+R 히스토리 검색 활성화
+
+## [1.2.21] - 2026-02-21
+
+### Added
+
+- first-run 이후에도 누락 도구 자동 설치: LazyVim, Node.js LTS, Bun, Rust, Docker CLI, CLIProxyAPI
+  - 기존 first-run 블록에서만 설치되던 도구들을 매 시작 시 존재 여부 체크 후 설치
+
+### Changed
+
+- README 최신 기능 및 포트 정보 반영 (AI 도구, Syncthing, CLIProxyAPI 등)
+
+### Removed
+
+- `env.sh`에서 npm global path (`/data/npm_global/bin`) 제거
+
+## [1.2.20] - 2026-02-21
+
+### Fixed
+
+- Claude Code 자가 업데이트 후 인증/설정 유실 방지: `~/.claude` 심링크 복구 로직 개선
+  - 자가 업데이트로 심링크가 일반 디렉토리로 교체되는 경우 바이너리만 갱신하고 인증 정보 보존
+- 누락 도구(Claude CLI, uv, pre-commit, zoxide, Fresh, OpenChamber, OpenCode, Go 등) 매 시작 시 자동 설치
+
+## [1.2.19] - 2026-02-20
+
+### Added
+
+- 영구 저장소 개선: Bun, uv tools, Qwen Code 설정을 `/data` 하위로 영구 저장
+- 바이너리 자동 복구: GitUI, gh, Just, act 등 시스템 바이너리 누락 시 자동 재설치
+
+## [1.2.18] - 2026-02-20
+
+### Changed
+
+- `setup-zsh.sh`를 매 컨테이너 시작 시 `--force`로 실행하여 항상 최신 zsh/bash 설정 적용
+
+## [1.2.17] - 2026-02-20
+
+### Added
+
+- zinit/zshrc 설정을 독립 스크립트(`setup-zsh.sh`)로 분리
+  - `rootfs/usr/local/bin/setup-zsh.sh`로 zsh 테마, 플러그인, 키바인딩 설정 모듈화
+  - `--force` 옵션으로 zinit 재설치 지원
+
+## [1.2.16] - 2026-02-20
+
+### Fixed
+
+- supervisor 설정 생성 시 getcwd 오류 수정: 서비스에 `directory` 지시자 추가
+
+## [1.2.15] - 2026-02-20
+
+### Fixed
+
+- 컨테이너 재시작 시 `.zshrc`/`.bashrc` 유실로 zinit 미작동 문제 수정
+
 ## [1.2.14] - 2026-02-20
 
 ### Fixed

@@ -5,6 +5,65 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.22] - 2026-02-22
+
+### Added
+
+- fzf 바이너리 설치 추가 (Dockerfile, 아키텍처별 GitHub releases)
+- 주요 CLI 도구 zsh 탭 완성 자동 생성: git-ai-commit, openclaw, opencode, gh, just, docker, rustup, uv, zellij, delta, bun, codex, rg
+- `gac` alias에 `compdef gac=git-ai-commit` 완성 연결
+- mcfly init을 `zsh-extra.sh`에 추가하여 Ctrl+R 히스토리 검색 활성화
+
+## [1.2.21] - 2026-02-21
+
+### Added
+
+- first-run 이후에도 누락 도구 자동 설치: LazyVim, Node.js LTS, Bun, Rust, Docker CLI, CLIProxyAPI
+
+### Changed
+
+- README 최신 기능 및 포트 정보 반영
+
+### Removed
+
+- `env.sh`에서 npm global path 제거
+
+## [1.2.20] - 2026-02-21
+
+### Fixed
+
+- Claude Code 인증 보존 및 누락 도구 자동 설치
+
+## [1.2.19] - 2026-02-20
+
+### Added
+
+- 영구 저장소 개선 및 바이너리 자동 복구
+
+## [1.2.18] - 2026-02-20
+
+### Changed
+
+- setup-zsh.sh를 매 시작 시 실행하여 항상 최신 설정 적용
+
+## [1.2.17] - 2026-02-20
+
+### Added
+
+- zinit/zshrc 설정을 독립 스크립트(setup-zsh.sh)로 분리
+
+## [1.2.16] - 2026-02-20
+
+### Fixed
+
+- supervisor 설정 생성 시 getcwd 오류 수정
+
+## [1.2.15] - 2026-02-20
+
+### Fixed
+
+- 컨테이너 재시작 시 .zshrc/.bashrc 유실로 zinit 미작동 문제 수정
+
 ## [1.2.14] - 2026-02-20
 
 ### Fixed
