@@ -717,11 +717,12 @@ CLIPROXY_DIR="/home/$USERNAME/cliproxyapi"
 set +e
 FAIL_OK=1
 
+CLIPROXY_CONFIG="/home/$USERNAME/.config/cliproxyapi/config.yaml"
 if [ -d "$CLIPROXY_DIR" ]; then
     log "Found CLIProxyAPI directory, configuring..."
-
     sudo -u $USERNAME mkdir -p /home/$USERNAME/.config/cliproxyapi
-    if [ ! -f "/home/$USERNAME/.config/cliproxyapi/config.yaml" ] || [ -n "$CLIPROXY_API_KEYS" ]; then
+
+    if [ ! -f "$CLIPROXY_CONFIG" ]; then
         {
             echo "debug: false"
             echo "logging-to-file: false"
@@ -733,8 +734,16 @@ if [ -d "$CLIPROXY_DIR" ]; then
                     [ -n "$key" ] && echo "  - \"$key\""
                 done
             fi
-        } > /home/$USERNAME/.config/cliproxyapi/config.yaml
-        chown $USERNAME:$USERNAME /home/$USERNAME/.config/cliproxyapi/config.yaml
+        } > "$CLIPROXY_CONFIG"
+        chown $USERNAME:$USERNAME "$CLIPROXY_CONFIG"
+    elif [ -n "$CLIPROXY_API_KEYS" ]; then
+        sed -i '/^api-keys:/,$d' "$CLIPROXY_CONFIG"
+        {
+            echo "api-keys:"
+            echo "$CLIPROXY_API_KEYS" | while read -r key; do
+                [ -n "$key" ] && echo "  - \"$key\""
+            done
+        } >> "$CLIPROXY_CONFIG"
     fi
 else
     log "CLIProxyAPI directory not found at $CLIPROXY_DIR; skipping."
