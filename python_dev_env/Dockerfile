@@ -169,6 +169,21 @@ RUN ARCH=$(dpkg --print-architecture) && \
         mv /tmp/duf /usr/local/bin/; \
     fi
 
+# Install fzf from pre-compiled binary
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "amd64" ]; then \
+        FZF_ARCH="linux_amd64"; \
+    elif [ "$ARCH" = "arm64" ]; then \
+        FZF_ARCH="linux_arm64"; \
+    else \
+        FZF_ARCH=""; \
+    fi && \
+    if [ -n "$FZF_ARCH" ]; then \
+        FZF_VERSION=$(curl -s https://api.github.com/repos/junegunn/fzf/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//' || echo "0.60.3") && \
+        [ -z "$FZF_VERSION" ] && FZF_VERSION="0.60.3" ; \
+        curl -fsSL "https://github.com/junegunn/fzf/releases/download/v${FZF_VERSION}/fzf-${FZF_VERSION}-${FZF_ARCH}.tar.gz" | tar -xz -C /usr/local/bin fzf; \
+    fi
+
 # Install mcfly (Ctrl+R shell history search) from pre-compiled binary
 RUN ARCH=$(dpkg --print-architecture) && \
     if [ "$ARCH" = "amd64" ]; then \
