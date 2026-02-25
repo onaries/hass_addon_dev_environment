@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dev Environment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--bg-card:#161b22;--bg-card-hover:#1c2129;--bg-inset:#0d1117;
+  --border:#30363d;--border-light:#21262d;
+  --text:#e6edf3;--text-muted:#8b949e;--text-dim:#484f58;
+  --green:#3fb950;--red:#f85149;--yellow:#d29922;--blue:#58a6ff;--purple:#bc8cff;--cyan:#39d353;
+  --green-bg:rgba(63,185,80,.12);--red-bg:rgba(248,81,73,.12);--yellow-bg:rgba(210,153,34,.12);--blue-bg:rgba(88,166,255,.1);
+  --font-sans:'DM Sans',system-ui,-apple-system,sans-serif;
+  --font-mono:'JetBrains Mono','Cascadia Code',monospace;
+  --radius:8px;--radius-sm:5px;
+}
+html{font-size:14px}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-height:100vh;line-height:1.5}
+a{color:var(--blue);text-decoration:none}
+
+/* Header */
+.header{background:var(--bg-card);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:sticky;top:0;z-index:10;backdrop-filter:blur(12px)}
+.header-left{display:flex;align-items:center;gap:14px}
+.header-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--blue),var(--purple));border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:18px}
+.header-title{font-size:1.15rem;font-weight:700;letter-spacing:-.02em}
+.header-subtitle{font-size:.8rem;color:var(--text-muted);font-family:var(--font-mono)}
+.header-right{display:flex;align-items:center;gap:20px;font-size:.8rem;color:var(--text-muted);font-family:var(--font-mono)}
+.header-right .live-dot{width:7px;height:7px;background:var(--green);border-radius:50%;display:inline-block;margin-right:5px;animation:pulse 2s infinite}
+.refresh-info{display:flex;align-items:center;gap:6px}
+.refresh-btn{background:var(--bg-inset);border:1px solid var(--border);color:var(--text-muted);padding:4px 10px;border-radius:var(--radius-sm);cursor:pointer;font-family:var(--font-mono);font-size:.75rem;transition:all .2s}
+.refresh-btn:hover{border-color:var(--blue);color:var(--blue)}
+
+/* Layout */
+.container{max-width:1360px;margin:0 auto;padding:20px 24px 40px}
+.grid{display:grid;gap:20px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-1{grid-template-columns:1fr}
+
+/* Cards */
+.card{background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius);overflow:hidden;transition:border-color .2s}
+.card:hover{border-color:var(--border)}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:.9rem;font-weight:600;display:flex;align-items:center;gap:8px}
+.card-title svg{width:16px;height:16px;opacity:.7}
+.card-badge{font-family:var(--font-mono);font-size:.7rem;padding:2px 8px;border-radius:10px;font-weight:500}
+.card-body{padding:16px 18px}
+
+/* Tool Grid */
+.cat-label{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border-light)}
+.cat-label:first-child{margin-top:0}
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.tool{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);background:var(--bg-inset);border:1px solid transparent;transition:all .15s}
+.tool:hover{border-color:var(--border)}
+.tool-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.tool-dot.ok{background:var(--green)}
+.tool-dot.missing{background:var(--red)}
+.tool-name{font-size:.82rem;font-weight:500;white-space:nowrap}
+.tool-ver{margin-left:auto;font-family:var(--font-mono);font-size:.72rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
+.tool-ver.none{color:var(--red);opacity:.7}
+
+/* Services */
+.svc-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--radius-sm);transition:background .15s}
+.svc-row:hover{background:var(--bg-inset)}
+.svc-row+.svc-row{border-top:1px solid var(--border-light)}
+.svc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.svc-dot.running{background:var(--green);animation:pulse 2s infinite}
+.svc-dot.stopped{background:var(--red)}
+.svc-dot.starting,.svc-dot.backoff{background:var(--yellow);animation:pulse 1s infinite}
+.svc-name{font-weight:600;font-size:.85rem;min-width:120px}
+.svc-badge{font-family:var(--font-mono);font-size:.68rem;padding:2px 8px;border-radius:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.svc-badge.running{background:var(--green-bg);color:var(--green)}
+.svc-badge.stopped{background:var(--red-bg);color:var(--red)}
+.svc-badge.starting,.svc-badge.backoff{background:var(--yellow-bg);color:var(--yellow)}
+.svc-meta{margin-left:auto;font-family:var(--font-mono);font-size:.72rem;color:var(--text-dim);display:flex;gap:14px}
+
+/* Login Table */
+.login-table{width:100%;border-collapse:separate;border-spacing:0}
+.login-table th{text-align:left;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);padding:6px 10px;border-bottom:1px solid var(--border-light)}
+.login-table td{padding:8px 10px;font-family:var(--font-mono);font-size:.78rem;border-bottom:1px solid var(--border-light);color:var(--text-muted)}
+.login-table tr:last-child td{border-bottom:none}
+.login-table tr:hover td{background:var(--bg-inset)}
+.login-active{position:relative}
+.login-active td{color:var(--text)!important}
+.login-active td:first-child::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:2px;background:var(--green);border-radius:2px}
+
+/* tmux */
+.tmux-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.tmux-card{padding:12px 14px;background:var(--bg-inset);border-radius:var(--radius-sm);border:1px solid transparent;transition:all .15s}
+.tmux-card:hover{border-color:var(--border)}
+.tmux-name{font-weight:600;font-size:.9rem;display:flex;align-items:center;gap:8px}
+.tmux-meta{display:flex;gap:14px;margin-top:6px;font-family:var(--font-mono);font-size:.72rem;color:var(--text-dim)}
+.tmux-badge{font-size:.65rem;padding:1px 6px;border-radius:8px;font-weight:600;font-family:var(--font-mono)}
+.tmux-badge.attached{background:var(--green-bg);color:var(--green)}
+.tmux-badge.detached{background:var(--yellow-bg);color:var(--yellow)}
+
+/* Empty / Loading / Error */
+.empty{text-align:center;padding:28px 16px;color:var(--text-dim);font-size:.85rem}
+.empty-icon{font-size:1.6rem;margin-bottom:6px;opacity:.4}
+.error-box{background:var(--red-bg);border:1px solid rgba(248,81,73,.3);border-radius:var(--radius);padding:16px;text-align:center;color:var(--red);margin:20px 0}
+.error-box button{margin-top:10px;background:var(--red);color:#fff;border:none;padding:6px 16px;border-radius:var(--radius-sm);cursor:pointer;font-weight:600}
+
+/* Skeleton */
+.skeleton{position:relative;overflow:hidden;background:var(--bg-inset);border-radius:var(--radius-sm)}
+.skeleton::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.04),transparent);animation:shimmer 1.5s infinite}
+.skel-row{height:38px;margin-bottom:8px;border-radius:var(--radius-sm)}
+.skel-block{height:120px;border-radius:var(--radius-sm)}
+
+/* Animations */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .35s ease-out both}
+
+/* Responsive */
+@media(max-width:900px){
+  .grid-2{grid-template-columns:1fr}
+  .header{padding:12px 16px}
+  .container{padding:16px}
+  .tools-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-icon">&#9881;</div>
+    <div>
+      <div class="header-title" id="hostname">Dev Environment</div>
+      <div class="header-subtitle">
+        <span id="uptime">loading...</span> &middot;
+        user: <span id="username">-</span>
+      </div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span><span class="live-dot"></span><span id="clock">--:--:--</span></span>
+    <span class="refresh-info">
+      next: <span id="countdown">30</span>s
+      <button class="refresh-btn" onclick="fetchData()" title="Refresh now">&#8635;</button>
+    </span>
+  </div>
+</div>
+
+<div class="container">
+  <div id="error-container"></div>
+
+  <!-- Tools + Services row -->
+  <div class="grid grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 3a2.5 2.5 0 0 0 0 5h7a2.5 2.5 0 0 0 0-5h-7zm7 6h-7a3.5 3.5 0 1 1 0-7h7a3.5 3.5 0 1 1 0 7zM4.5 5a.5.5 0 1 0 0 1 .5.5 0 0 0 0-1zM3 5.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0z"/><path d="M4.5 9a2.5 2.5 0 0 0 0 5h7a2.5 2.5 0 0 0 0-5h-7zm7 6h-7a3.5 3.5 0 1 1 0-7h7a3.5 3.5 0 1 1 0 7zm0-4.5a.5.5 0 1 0 0 1 .5.5 0 0 0 0-1zm-2 .5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0z"/></svg>
+          Installed Tools
+        </span>
+        <span class="card-badge" id="tools-count" style="background:var(--blue-bg);color:var(--blue)">-</span>
+      </div>
+      <div class="card-body" id="tools-body">
+        <div class="skeleton skel-block"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-3.5a.5.5 0 0 1 .5.5v3.793l2.354 2.353a.5.5 0 0 1-.708.708l-2.5-2.5A.5.5 0 0 1 7.5 9V5a.5.5 0 0 1 .5-.5z"/></svg>
+          Services
+        </span>
+        <span class="card-badge" id="svc-count" style="background:var(--green-bg);color:var(--green)">-</span>
+      </div>
+      <div class="card-body" id="services-body">
+        <div class="skeleton skel-block"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logins + tmux row -->
+  <div class="grid grid-2">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2.75C2 1.784 2.784 1 3.75 1h2.5a.75.75 0 0 1 0 1.5h-2.5a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h2.5a.75.75 0 0 1 0 1.5h-2.5A1.75 1.75 0 0 1 2 13.25V2.75zm6.56 4.5l1.97-1.97a.749.749 0 1 0-1.06-1.06L6.22 7.47a.749.749 0 0 0 0 1.06l3.25 3.25a.749.749 0 1 0 1.06-1.06L8.56 8.75h4.69a.75.75 0 0 0 0-1.5H8.56z"/></svg>
+          Recent SSH Logins
+        </span>
+      </div>
+      <div class="card-body" id="logins-body">
+        <div class="skeleton skel-block"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 2.75C0 1.784.784 1 1.75 1h12.5c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25V2.75zm1.75-.25a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V2.75a.25.25 0 0 0-.25-.25H1.75zM7.25 8a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 0 1.5h-3.5A.75.75 0 0 1 7.25 8zm.75-3.25a.75.75 0 0 0 0 1.5h3.5a.75.75 0 0 0 0-1.5H8zM7.25 11a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 0 1.5H8a.75.75 0 0 1-.75-.75zM3 6.5a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM4 8a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm-1 4a1 1 0 1 1 2 0 1 1 0 0 1-2 0z"/></svg>
+          tmux Sessions
+        </span>
+      </div>
+      <div class="card-body" id="tmux-body">
+        <div class="skeleton skel-block"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const REFRESH_INTERVAL = 30;
+  let countdown = REFRESH_INTERVAL;
+  let timer = null;
+
+  // Clock
+  function updateClock(){
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }
+  setInterval(updateClock,1000);
+  updateClock();
+
+  // Countdown
+  function startCountdown(){
+    clearInterval(timer);
+    countdown = REFRESH_INTERVAL;
+    document.getElementById('countdown').textContent = countdown;
+    timer = setInterval(function(){
+      countdown--;
+      document.getElementById('countdown').textContent = Math.max(countdown,0);
+      if(countdown <= 0){ fetchData(); }
+    },1000);
+  }
+
+  // Fetch
+  window.fetchData = async function(){
+    clearInterval(timer);
+    document.getElementById('countdown').textContent = '...';
+    document.getElementById('error-container').innerHTML = '';
+    try {
+      const res = await fetch('api/status');
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const d = await res.json();
+      render(d);
+    } catch(e){
+      document.getElementById('error-container').innerHTML =
+        '<div class="error-box">Failed to load status: '+esc(e.message)+
+        '<br><button onclick="fetchData()">Retry</button></div>';
+    }
+    startCountdown();
+  };
+
+  function esc(s){ return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : ''; }
+
+  // Category config
+  const CAT = {
+    lang: {label:'Languages', order:0},
+    infra: {label:'Infrastructure', order:1},
+    tool: {label:'Dev Tools', order:2},
+    ai: {label:'AI Tools', order:3}
+  };
+
+  function render(d){
+    // Header
+    document.getElementById('hostname').textContent = d.hostname || 'Dev Environment';
+    document.getElementById('uptime').textContent = d.uptime ? 'up ' + d.uptime : '';
+    document.getElementById('username').textContent = d.username || '-';
+
+    renderTools(d.tools || []);
+    renderServices(d.services || []);
+    renderLogins(d.recent_logins || []);
+    renderTmux(d.tmux_sessions || []);
+  }
+
+  function renderTools(tools){
+    const installed = tools.filter(t=>t.installed).length;
+    document.getElementById('tools-count').textContent = installed + '/' + tools.length;
+
+    // Group by category
+    const groups = {};
+    tools.forEach(t => {
+      const cat = t.category || 'tool';
+      if(!groups[cat]) groups[cat] = [];
+      groups[cat].push(t);
+    });
+
+    let html = '';
+    const sorted = Object.keys(groups).sort((a,b)=>(CAT[a]?.order||9)-(CAT[b]?.order||9));
+    sorted.forEach(cat => {
+      html += '<div class="cat-label">'+(CAT[cat]?.label||cat)+'</div>';
+      html += '<div class="tools-grid">';
+      groups[cat].forEach(t => {
+        const dotCls = t.installed ? 'ok' : 'missing';
+        const verCls = t.installed ? '' : ' none';
+        const ver = t.installed ? esc(t.version) : 'not installed';
+        html += '<div class="tool fade-in"><span class="tool-dot '+dotCls+'"></span>'+
+          '<span class="tool-name">'+esc(t.name)+'</span>'+
+          '<span class="tool-ver'+verCls+'" title="'+ver+'">'+ver+'</span></div>';
+      });
+      html += '</div>';
+    });
+    document.getElementById('tools-body').innerHTML = html;
+  }
+
+  function renderServices(svcs){
+    const running = svcs.filter(s=>s.status==='RUNNING').length;
+    const el = document.getElementById('svc-count');
+    el.textContent = running + '/' + svcs.length;
+    el.style.background = running === svcs.length ? 'var(--green-bg)' : 'var(--yellow-bg)';
+    el.style.color = running === svcs.length ? 'var(--green)' : 'var(--yellow)';
+
+    if(!svcs.length){
+      document.getElementById('services-body').innerHTML =
+        '<div class="empty"><div class="empty-icon">&#9881;</div>No services detected</div>';
+      return;
+    }
+
+    let html = '';
+    svcs.forEach(s => {
+      const st = (s.status||'').toLowerCase();
+      html += '<div class="svc-row fade-in">'+
+        '<span class="svc-dot '+st+'"></span>'+
+        '<span class="svc-name">'+esc(s.name)+'</span>'+
+        '<span class="svc-badge '+st+'">'+esc(s.status)+'</span>'+
+        '<span class="svc-meta">';
+      if(s.pid) html += '<span>PID '+s.pid+'</span>';
+      if(s.uptime) html += '<span>'+esc(s.uptime)+'</span>';
+      html += '</span></div>';
+    });
+    document.getElementById('services-body').innerHTML = html;
+  }
+
+  function renderLogins(logins){
+    if(!logins.length){
+      document.getElementById('logins-body').innerHTML =
+        '<div class="empty"><div class="empty-icon">&#128274;</div>No recent logins</div>';
+      return;
+    }
+    let html = '<table class="login-table"><thead><tr>'+
+      '<th>User</th><th>IP</th><th>TTY</th><th>Time</th><th>Status</th></tr></thead><tbody>';
+    logins.forEach(l => {
+      const active = l.status && l.status.includes('logged in');
+      html += '<tr class="'+(active?'login-active':'')+' fade-in">'+
+        '<td>'+esc(l.user)+'</td>'+
+        '<td>'+esc(l.ip)+'</td>'+
+        '<td>'+esc(l.terminal)+'</td>'+
+        '<td>'+esc(l.time)+'</td>'+
+        '<td>'+esc(l.status)+'</td></tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('logins-body').innerHTML = html;
+  }
+
+  function renderTmux(sessions){
+    if(!sessions.length){
+      document.getElementById('tmux-body').innerHTML =
+        '<div class="empty"><div class="empty-icon">&#128187;</div>No active tmux sessions</div>';
+      return;
+    }
+    let html = '<div class="tmux-grid">';
+    sessions.forEach(s => {
+      const badge = s.attached
+        ? '<span class="tmux-badge attached">attached</span>'
+        : '<span class="tmux-badge detached">detached</span>';
+      html += '<div class="tmux-card fade-in">'+
+        '<div class="tmux-name">'+esc(s.name||s.raw)+' '+badge+'</div>'+
+        '<div class="tmux-meta">';
+      if(s.windows) html += '<span>'+s.windows+' window'+(s.windows!==1?'s':'')+'</span>';
+      if(s.created) html += '<span>'+esc(s.created)+'</span>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+    document.getElementById('tmux-body').innerHTML = html;
+  }
+
+  // Init
+  fetchData();
+})();
+</script>
+</body>
+</html>

@@ -1180,6 +1180,20 @@ stderr_logfile=/var/log/supervisor/syncthing_err.log
 priority=20
 EOF
 
+# Add status dashboard server
+cat >> /etc/supervisor/conf.d/services.conf << EOF
+
+[program:dashboard]
+command=/usr/bin/python3 /usr/local/bin/dashboard-server.py
+environment=DASHBOARD_PORT="8099",DASHBOARD_USER="$USERNAME"
+autostart=true
+autorestart=true
+stdout_logfile=/var/log/supervisor/dashboard.log
+stderr_logfile=/var/log/supervisor/dashboard_err.log
+priority=15
+EOF
+log "Status dashboard added to supervisor (ingress port 8099)"
+
 CLIPROXY_DIR="/home/$USERNAME/cliproxyapi"
 CLIPROXY_CONFIG="/home/$USERNAME/.config/cliproxyapi/config.yaml"
 if [ -d "$CLIPROXY_DIR" ] && [ -f "$CLIPROXY_CONFIG" ]; then
