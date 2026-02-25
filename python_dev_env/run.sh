@@ -591,6 +591,57 @@ if ! command -v just >/dev/null 2>&1; then
     FAIL_OK=0
 fi
 
+# Install Dolt if not present
+if ! command -v dolt >/dev/null 2>&1; then
+    log "Installing Dolt..."
+    set +e
+    FAIL_OK=1
+    ARCH=$(dpkg --print-architecture)
+    if [ "$ARCH" = "amd64" ]; then
+        DOLT_ARCH="amd64"
+    elif [ "$ARCH" = "arm64" ]; then
+        DOLT_ARCH="arm64"
+    fi
+    if [ -n "$DOLT_ARCH" ]; then
+        if curl -fsSL "https://github.com/dolthub/dolt/releases/latest/download/dolt-linux-${DOLT_ARCH}.tar.gz" -o /tmp/dolt.tar.gz; then
+            tar -xzf /tmp/dolt.tar.gz -C /tmp
+            mv /tmp/dolt-linux-${DOLT_ARCH}/bin/dolt /usr/local/bin/
+            chmod +x /usr/local/bin/dolt
+            rm -rf /tmp/dolt-linux-${DOLT_ARCH} /tmp/dolt.tar.gz
+        fi
+    fi
+    set -e
+    FAIL_OK=0
+fi
+
+# Install Beads (bd) if not present
+if ! command -v bd >/dev/null 2>&1; then
+    log "Installing Beads (bd)..."
+    set +e
+    FAIL_OK=1
+    ARCH=$(dpkg --print-architecture)
+    if [ "$ARCH" = "amd64" ]; then
+        BD_ARCH="amd64"
+    elif [ "$ARCH" = "arm64" ]; then
+        BD_ARCH="arm64"
+    fi
+    if [ -n "$BD_ARCH" ]; then
+        BD_VERSION=$(curl -s https://api.github.com/repos/steveyegge/beads/releases/latest | jq -r '.tag_name // "v0.56.1"' | sed 's/^v//')
+        if curl -fsSL "https://github.com/steveyegge/beads/releases/download/v${BD_VERSION}/beads_${BD_VERSION}_linux_${BD_ARCH}.tar.gz" -o /tmp/beads.tar.gz; then
+            tar -xzf /tmp/beads.tar.gz -C /usr/local/bin bd 2>/dev/null || tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd /usr/local/bin/ 2>/dev/null || true
+            chmod +x /usr/local/bin/bd 2>/dev/null || true
+        fi
+        rm -f /tmp/beads.tar.gz
+    fi
+    # Generate zsh completion
+    if command -v bd >/dev/null 2>&1; then
+        mkdir -p /usr/local/share/zsh/site-functions
+        bd completion zsh > /usr/local/share/zsh/site-functions/_bd 2>/dev/null || true
+    fi
+    set -e
+    FAIL_OK=0
+fi
+
 # Install act if not present
 if ! command -v act >/dev/null 2>&1; then
     log "Installing act..."
