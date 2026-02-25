@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.24] - 2026-02-26
+
+### Added
+
+- HA ingress 기반 상태 대시보드 웹 UI 추가
+  - Python HTTP 대시보드 서버 (`dashboard-server.py`, 포트 8099)
+  - 다크 테마 대시보드 HTML (`index.html`, JetBrains Mono + DM Sans, 30초 자동 새로고침)
+  - 도구 버전 확인 (29개 도구, 4개 카테고리: 언어/인프라/개발도구/AI)
+  - supervisor 서비스 상태 실시간 표시 (RUNNING/STOPPED/STARTING)
+  - 최근 SSH 접속 기록 (현재 세션 하이라이트)
+  - tmux 세션 조회 (attached/detached 상태)
+- `config.yaml`에 HA ingress 설정 추가 (`ingress: true`, `ingress_port: 8099`, `panel_icon: mdi:monitor-dashboard`, `panel_title: Dev Environment`)
+- supervisord에 dashboard 프로세스 등록 (priority 15)
+
+### Fixed
+
+- `setup-zsh.sh` completion 생성 시 NVM 및 사용자 도구 PATH 누락 수정
+  - completion 생성 전 NVM source 및 `~/.local/bin`, `~/.opencode/bin`, `~/.bun/bin`, `/data/rust_cargo/cargo/bin` 등을 PATH에 추가
+  - 기존 4개(delta, docker, rg, zellij) → 12개 도구 completion 파일 정상 생성 (git-ai-commit, openclaw, opencode, gh, just, uv, bun, codex 추가)
+
+
 ## [1.2.22] - 2026-02-22
 
 ### Added

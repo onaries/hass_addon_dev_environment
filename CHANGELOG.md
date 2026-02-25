@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.24] - 2026-02-26
+
+### Added
+
+- HA ingress 기반 상태 대시보드 웹 UI 추가 (도구 버전, 서비스 상태, SSH 접속 기록, tmux 세션 조회)
+- Python HTTP 대시보드 서버 추가 (`dashboard-server.py`, 포트 8099)
+- 다크 테마 대시보드 HTML (`index.html`, 30초 자동 새로고침)
+- `config.yaml`에 ingress 설정 추가 (`ingress: true`, `panel_icon`, `panel_title`)
+- supervisord에 dashboard 프로세스 등록
+
+### Fixed
+
+- `setup-zsh.sh` completion 생성 시 NVM/사용자 도구 PATH 누락 수정 (`~/.opencode/bin` 등 추가)
+- git-ai-commit, opencode 등 12개 도구의 zsh completion 파일이 정상 생성되도록 개선
+
 ## [1.2.23] - 2026-02-25
 
 ### Added
