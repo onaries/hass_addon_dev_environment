@@ -1218,6 +1218,21 @@ EOF
     log "OpenClaw gateway added to supervisor (port 18789)"
 fi
 
+# Add Claude Code token refresh daemon
+if [ -f "/home/$USERNAME/.claude/.credentials.json" ]; then
+    cat >> /etc/supervisor/conf.d/services.conf << EOF
+
+[program:claude-token-refresh]
+command=/usr/local/bin/claude-token-refresh.sh
+autostart=true
+autorestart=true
+stdout_logfile=/var/log/supervisor/claude-token-refresh.log
+stderr_logfile=/var/log/supervisor/claude-token-refresh_err.log
+priority=50
+EOF
+    log "Claude Code token refresh daemon added to supervisor"
+fi
+
 log "Starting services via supervisord..."
 log "SSH is available on port $SSH_PORT"
 log "Syncthing GUI is available on port 8384"
