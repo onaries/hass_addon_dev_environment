@@ -197,6 +197,12 @@ ZSHRC_EOF
     fi
 
     mkdir -p "$HOME/.zsh/completions"
+
+    # Source NVM and user paths so we can find user-installed tools
+    export NVM_DIR="/opt/nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" 2>/dev/null
+    export PATH="$HOME/.local/bin:$HOME/.bun/bin:$HOME/.opencode/bin:/data/rust_cargo/cargo/bin:/usr/local/go/bin:$PATH"
+
     command -v git-ai-commit >/dev/null 2>&1 && git-ai-commit completion zsh > "$HOME/.zsh/completions/_git-ai-commit" 2>/dev/null || true
     command -v openclaw >/dev/null 2>&1 && openclaw completion -s zsh > "$HOME/.zsh/completions/_openclaw" 2>/dev/null || true
     command -v opencode >/dev/null 2>&1 && opencode completion zsh > "$HOME/.zsh/completions/_opencode" 2>/dev/null || true
