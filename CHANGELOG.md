@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.23] - 2026-02-25
+
+### Added
+
+- Dolt SQL 데이터베이스 바이너리 설치 추가 (아키텍처별 GitHub releases, amd64/arm64)
+- Beads(bd) AI 에이전트용 이슈 트래커 설치 추가 (zsh completion 포함)
+- Claude Code OAuth 토큰 자동 갱신 데몬 추가 (supervisor 등록, 만료 2시간 전 자동 리프레시)
+- SSH config 파일 영구 저장소 연동 (`/data/user_ssh_keys/config` 심링크)
+
 ## [1.2.22] - 2026-02-22
 
 ### Added
