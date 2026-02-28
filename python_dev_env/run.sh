@@ -831,6 +831,13 @@ if [ ! -L "/home/$USERNAME/.local" ]; then
     sudo -u $USERNAME ln -sf /data/user_local /home/$USERNAME/.local
 fi
 
+# Setup persistent zsh history for mcfly
+if [ ! -f "/data/zsh_history" ]; then
+    sudo -u $USERNAME touch /data/zsh_history
+fi
+chown $USERNAME:$USERNAME /data/zsh_history
+sudo -u $USERNAME ln -sf /data/zsh_history /home/$USERNAME/.zsh_history
+
 # Setup git-ai-commit persistent storage
 mkdir -p /data/git_ai_commit_config
 chown $USERNAME:$USERNAME /data/git_ai_commit_config
@@ -1181,18 +1188,19 @@ priority=20
 EOF
 
 # Add status dashboard server
+DASHBOARD_EXT_PORT=$(jq -r '.dashboard_port // 8100' $CONFIG_PATH)
 cat >> /etc/supervisor/conf.d/services.conf << EOF
 
 [program:dashboard]
 command=/usr/bin/python3 /usr/local/bin/dashboard-server.py
-environment=DASHBOARD_PORT="8099",DASHBOARD_USER="$USERNAME"
+environment=DASHBOARD_PORT="8099",DASHBOARD_EXT_PORT="$DASHBOARD_EXT_PORT",DASHBOARD_USER="$USERNAME"
 autostart=true
 autorestart=true
 stdout_logfile=/var/log/supervisor/dashboard.log
 stderr_logfile=/var/log/supervisor/dashboard_err.log
 priority=15
 EOF
-log "Status dashboard added to supervisor (ingress port 8099)"
+log "Status dashboard added to supervisor (ingress:8099, external:$DASHBOARD_EXT_PORT)"
 
 CLIPROXY_DIR="/home/$USERNAME/cliproxyapi"
 CLIPROXY_CONFIG="/home/$USERNAME/.config/cliproxyapi/config.yaml"

@@ -19,6 +19,7 @@ ports:
   "2322/tcp": 2322
   "8317/tcp": 8317
   "8384/tcp": 8384
+  "8100/tcp": 8100
   "18789/tcp": 18789
   "22000/tcp": 22000
   "22000/udp": 22000
@@ -26,6 +27,7 @@ ports_description:
   "2322/tcp": "SSH port"
   "8317/tcp": "CLIProxyAPI"
   "8384/tcp": "Syncthing Web GUI"
+  "8100/tcp": "Dashboard Web UI"
   "18789/tcp": "OpenClaw Gateway"
   "22000/tcp": "Syncthing file transfer"
   "22000/udp": "Syncthing QUIC transfer"
@@ -49,6 +51,7 @@ options:
   git_name: ""
   git_email: ""
   cliproxy_api_keys: []
+  dashboard_port: 8100
 schema:
   ssh_keys:
     - str?
@@ -60,3 +63,4 @@ schema:
   git_email: str?
   cliproxy_api_keys:
     - str?
+  dashboard_port: int(1,65535)?

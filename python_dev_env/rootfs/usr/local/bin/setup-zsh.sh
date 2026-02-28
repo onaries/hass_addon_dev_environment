@@ -111,7 +111,7 @@ setup_zshrc() {
 # ZSH Options
 # ============================================================================
 setopt AUTO_CD HIST_IGNORE_ALL_DUPS HIST_SAVE_NO_DUPS SHARE_HISTORY EXTENDED_HISTORY nonomatch
-HISTFILE=~/.zsh_history
+HISTFILE=/data/zsh_history
 HISTSIZE=10000
 SAVEHIST=10000
 

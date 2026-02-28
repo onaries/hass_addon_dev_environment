@@ -98,6 +98,34 @@ a{color:var(--blue);text-decoration:none}
 .tmux-badge.attached{background:var(--green-bg);color:var(--green)}
 .tmux-badge.detached{background:var(--yellow-bg);color:var(--yellow)}
 
+/* Projects */
+.proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.proj-card{padding:12px 14px;background:var(--bg-inset);border-radius:var(--radius-sm);border:1px solid transparent;transition:all .15s;display:flex;flex-direction:column;gap:6px}
+.proj-card:hover{border-color:var(--border)}
+.proj-name{font-weight:600;font-size:.9rem;display:flex;align-items:center;gap:8px;overflow:hidden}
+.proj-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proj-meta{display:flex;gap:12px;font-family:var(--font-mono);font-size:.72rem;color:var(--text-dim);align-items:center;flex-wrap:wrap}
+.proj-branch{font-size:.68rem;padding:1px 7px;border-radius:8px;font-weight:600;font-family:var(--font-mono);background:var(--blue-bg);color:var(--blue)}
+.proj-path{font-family:var(--font-mono);font-size:.7rem;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Logs */
+.log-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px}
+.log-tab{background:var(--bg-inset);border:1px solid var(--border-light);color:var(--text-muted);padding:4px 12px;border-radius:var(--radius-sm);cursor:pointer;font-family:var(--font-mono);font-size:.73rem;transition:all .15s;white-space:nowrap}
+.log-tab:hover{border-color:var(--border);color:var(--text)}
+.log-tab.active{background:var(--blue-bg);border-color:var(--blue);color:var(--blue)}
+.log-tab .err-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--red);margin-left:4px;vertical-align:middle}
+.log-viewer{background:var(--bg);border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:10px 14px;max-height:420px;overflow:auto;font-family:var(--font-mono);font-size:.73rem;line-height:1.7;white-space:pre-wrap;word-break:break-all;color:var(--text-muted)}
+.log-viewer::-webkit-scrollbar{width:6px}
+.log-viewer::-webkit-scrollbar-track{background:transparent}
+.log-viewer::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.log-line-err{color:var(--red)}
+.log-line-warn{color:var(--yellow)}
+.log-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;justify-content:space-between}
+.log-toolbar-right{display:flex;align-items:center;gap:8px}
+.log-btn{background:var(--bg-inset);border:1px solid var(--border);color:var(--text-muted);padding:3px 10px;border-radius:var(--radius-sm);cursor:pointer;font-family:var(--font-mono);font-size:.7rem;transition:all .15s}
+.log-btn:hover{border-color:var(--blue);color:var(--blue)}
+.log-line-count{font-family:var(--font-mono);font-size:.7rem;color:var(--text-dim)}
+
 /* Empty / Loading / Error */
 .empty{text-align:center;padding:28px 16px;color:var(--text-dim);font-size:.85rem}
 .empty-icon{font-size:1.6rem;margin-bottom:6px;opacity:.4}
@@ -179,6 +207,22 @@ a{color:var(--blue);text-decoration:none}
     </div>
   </div>
 
+  <!-- Projects -->
+  <div class="grid grid-1" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0 0 16 13.25v-8.5A1.75 1.75 0 0 0 14.25 3H7.5a.25.25 0 0 1-.2-.1l-.9-1.2C6.07 1.26 5.55 1 5 1H1.75zM1.5 2.75a.25.25 0 0 1 .25-.25H5c.09 0 .176.04.232.107l.89 1.186c.328.44.83.707 1.378.707h6.75a.25.25 0 0 1 .25.25v8.5a.25.25 0 0 1-.25.25H1.75a.25.25 0 0 1-.25-.25V2.75z"/></svg>
+          Projects
+        </span>
+        <span class="card-badge" id="projects-count" style="background:var(--purple);color:#fff;opacity:.85">-</span>
+      </div>
+      <div class="card-body" id="projects-body">
+        <div class="skeleton skel-block"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Logins + tmux row -->
   <div class="grid grid-2">
     <div class="card">
@@ -201,6 +245,21 @@ a{color:var(--blue);text-decoration:none}
         </span>
       </div>
       <div class="card-body" id="tmux-body">
+        <div class="skeleton skel-block"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Service Logs -->
+  <div class="grid grid-1" style="margin-top:20px">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M5 8.25a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5A.75.75 0 0 1 5 8.25zM4 10.5A.75.75 0 0 1 4.75 9.75h6.5a.75.75 0 0 1 0 1.5h-6.5A.75.75 0 0 1 4 10.5zM5 12.75a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75zM1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25V1.75C0 .784.784 0 1.75 0zM1.5 1.75v12.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V1.75a.25.25 0 0 0-.25-.25H1.75a.25.25 0 0 0-.25.25z"/></svg>
+          Service Logs
+        </span>
+      </div>
+      <div class="card-body" id="logs-body">
         <div class="skeleton skel-block"></div>
       </div>
     </div>
@@ -270,8 +329,10 @@ a{color:var(--blue);text-decoration:none}
 
     renderTools(d.tools || []);
     renderServices(d.services || []);
+    renderProjects(d.projects || []);
     renderLogins(d.recent_logins || []);
     renderTmux(d.tmux_sessions || []);
+    initLogTabs(d.services || []);
   }
 
   function renderTools(tools){
@@ -373,6 +434,135 @@ a{color:var(--blue);text-decoration:none}
     });
     html += '</div>';
     document.getElementById('tmux-body').innerHTML = html;
+  }
+
+  function renderProjects(projects){
+    document.getElementById('projects-count').textContent = projects.length;
+    if(!projects.length){
+      document.getElementById('projects-body').innerHTML =
+        '<div class="empty"><div class="empty-icon">&#128194;</div>No projects in /workspace/projects</div>';
+      return;
+    }
+    let html = '<div class="proj-grid">';
+    projects.forEach(p => {
+      const gitIcon = p.git ? '<svg viewBox="0 0 16 16" fill="var(--text-dim)" width="14" height="14" style="flex-shrink:0"><path d="M15.698 7.287L8.712.302a1.03 1.03 0 0 0-1.457 0l-1.45 1.45 1.84 1.84a1.223 1.223 0 0 1 1.55 1.56l1.773 1.774a1.224 1.224 0 1 1-.733.693L8.535 5.918v4.27a1.224 1.224 0 1 1-1.008-.036V5.846a1.224 1.224 0 0 1-.664-1.605L5.093 2.47l-4.79 4.79a1.03 1.03 0 0 0 0 1.457l6.986 6.986a1.03 1.03 0 0 0 1.457 0l6.953-6.953a1.031 1.031 0 0 0 0-1.457z"/></svg>' : '';
+      const timeAgo = p.last_modified ? relativeTime(p.last_modified) : '';
+      html += '<div class="proj-card fade-in">'+
+        '<div class="proj-name">'+gitIcon+'<span>'+esc(p.name)+'</span>'+
+        (p.branch ? ' <span class="proj-branch">'+esc(p.branch)+'</span>' : '')+
+        '</div>'+
+        '<div class="proj-meta">'+
+        (timeAgo ? '<span>'+timeAgo+'</span>' : '')+
+        '<span class="proj-path">'+esc(p.path)+'</span>'+
+        '</div></div>';
+    });
+    html += '</div>';
+    document.getElementById('projects-body').innerHTML = html;
+  }
+
+  function relativeTime(iso){
+    const diff = Date.now() - new Date(iso).getTime();
+    const sec = Math.floor(diff/1000);
+    if(sec < 60) return 'just now';
+    const min = Math.floor(sec/60);
+    if(min < 60) return min+'m ago';
+    const hr = Math.floor(min/60);
+    if(hr < 24) return hr+'h ago';
+    const d = Math.floor(hr/24);
+    if(d < 30) return d+'d ago';
+    const mo = Math.floor(d/30);
+    return mo+'mo ago';
+  }
+
+  // ---- Service Logs ----
+  let logTabsInited = false;
+  let activeLogService = '';
+
+  function initLogTabs(services){
+    // Build tabs from supervisor services; only init tabs once, then just refresh if active
+    if(logTabsInited) return;
+    // Fetch available log services from logs API
+    fetch('api/logs').then(r=>r.json()).then(d=>{
+      const svcs = d.services || [];
+      if(!svcs.length){
+        document.getElementById('logs-body').innerHTML =
+          '<div class="empty"><div class="empty-icon">&#128220;</div>No service logs available</div>';
+        return;
+      }
+      logTabsInited = true;
+      activeLogService = svcs[0];
+      let html = '<div class="log-tabs" id="log-tabs">';
+      svcs.forEach((s,i) => {
+        html += '<button class="log-tab'+(i===0?' active':'')+'" data-svc="'+esc(s)+'" onclick="switchLogTab(\''+esc(s)+'\')">'+esc(s)+'</button>';
+      });
+      html += '</div>';
+      html += '<div class="log-toolbar"><span class="log-line-count" id="log-line-count"></span>';
+      html += '<div class="log-toolbar-right">';
+      html += '<label style="font-size:.72rem;color:var(--text-dim);display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="log-err-only" onchange="fetchLogs()" style="accent-color:var(--red)"> errors only</label>';
+      html += '<button class="log-btn" onclick="fetchLogs()" title="Refresh logs">&#8635; refresh</button>';
+      html += '<button class="log-btn" id="log-scroll-btn" onclick="scrollLogBottom()" title="Scroll to bottom">&#8595; bottom</button>';
+      html += '</div></div>';
+      html += '<div class="log-viewer" id="log-viewer">loading...</div>';
+      document.getElementById('logs-body').innerHTML = html;
+      fetchLogs();
+    }).catch(()=>{});
+  }
+
+  window.switchLogTab = function(svc){
+    activeLogService = svc;
+    document.querySelectorAll('.log-tab').forEach(t=>{
+      t.classList.toggle('active', t.dataset.svc === svc);
+    });
+    fetchLogs();
+  };
+
+  window.fetchLogs = async function(){
+    const viewer = document.getElementById('log-viewer');
+    if(!viewer) return;
+    viewer.textContent = 'loading...';
+    try {
+      const res = await fetch('api/logs?service='+encodeURIComponent(activeLogService)+'&lines=300');
+      const d = await res.json();
+      renderLogs(d);
+    } catch(e){
+      viewer.textContent = 'Failed to load logs: ' + e.message;
+    }
+  };
+
+  window.scrollLogBottom = function(){
+    const v = document.getElementById('log-viewer');
+    if(v) v.scrollTop = v.scrollHeight;
+  };
+
+  function renderLogs(d){
+    const viewer = document.getElementById('log-viewer');
+    const countEl = document.getElementById('log-line-count');
+    if(!viewer) return;
+    const errOnly = document.getElementById('log-err-only')?.checked;
+    let lines = d.lines || [];
+    if(errOnly){
+      lines = lines.filter(l => /\[ERR\]|error|fatal|traceback|exception/i.test(l));
+    }
+    if(!lines.length){
+      viewer.innerHTML = '<span style="color:var(--text-dim)">'+(errOnly ? 'No errors found' : 'Log is empty')+'</span>';
+      countEl.textContent = '0 lines';
+      return;
+    }
+    countEl.textContent = lines.length + ' lines';
+    // Build colored HTML
+    let html = '';
+    lines.forEach(l => {
+      const e = esc(l);
+      if(/\[ERR\]|error|fatal|traceback|exception/i.test(l)){
+        html += '<div class="log-line-err">'+e+'</div>';
+      } else if(/warn/i.test(l)){
+        html += '<div class="log-line-warn">'+e+'</div>';
+      } else {
+        html += '<div>'+e+'</div>';
+      }
+    });
+    viewer.innerHTML = html;
+    viewer.scrollTop = viewer.scrollHeight;
   }
 
   // Init
