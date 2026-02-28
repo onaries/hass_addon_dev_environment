@@ -2,7 +2,7 @@ bindkey '\t' menu-complete
 bindkey "${terminfo[kcbt]}" reverse-menu-complete
 setopt MENU_COMPLETE
 
-eval "$(zoxide init zsh)"
+eval "$(zoxide init zsh --cmd cd)"
 eval "$(mcfly init zsh)"
 
 _server() { ~/scripts/connect_server; }

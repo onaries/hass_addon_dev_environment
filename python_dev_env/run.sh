@@ -377,11 +377,10 @@ GITALIASES
         log "Warning: Failed to install uv (continuing)"
     fi
 
-    # Install pre-commit for user
-    log "Installing pre-commit for user..."
-    if ! sudo -u $USERNAME bash -c 'export PATH="$HOME/.local/bin:$PATH" && uv tool install pre-commit'; then
-        log "Warning: Failed to install pre-commit (continuing)"
-    fi
+    # Install Python dev tools for user via uv
+    log "Installing Python dev tools (prek, ruff, mypy) for user..."
+    sudo -u $USERNAME bash -c 'export PATH="$HOME/.local/bin:$PATH" && uv tool install prek && uv tool install ruff && uv tool install mypy' || \
+        log "Warning: Failed to install some Python dev tools (continuing)"
 
     log "Installing zoxide for user..."
     if ! sudo -u $USERNAME bash -c 'curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh'; then
@@ -546,7 +545,7 @@ if ! command -v gitui >/dev/null 2>&1; then
         GITUI_ARCH="aarch64"
     fi
     if [ -n "$GITUI_ARCH" ]; then
-        GITUI_VERSION=$(curl -s https://api.github.com/repos/gitui-org/gitui/releases/latest | jq -r '.tag_name // "v0.27.0"')
+        GITUI_VERSION=$(curl -s https://api.github.com/repos/gitui-org/gitui/releases/latest | jq -r '.tag_name // "v0.28.0"')
         if curl -fsSL "https://github.com/gitui-org/gitui/releases/download/${GITUI_VERSION}/gitui-linux-${GITUI_ARCH}.tar.gz" -o /tmp/gitui.tar.gz; then
             tar -xzf /tmp/gitui.tar.gz -C /tmp && mv /tmp/gitui /usr/local/bin/ && chmod +x /usr/local/bin/gitui
         fi
@@ -583,7 +582,7 @@ if ! command -v just >/dev/null 2>&1; then
         JUST_ARCH="aarch64-unknown-linux-musl"
     fi
     if [ -n "$JUST_ARCH" ]; then
-        JUST_VERSION=$(curl -s https://api.github.com/repos/casey/just/releases/latest | jq -r '.tag_name // "1.36.0"')
+        JUST_VERSION=$(curl -s https://api.github.com/repos/casey/just/releases/latest | jq -r '.tag_name // "1.46.0"')
         curl -fsSL "https://github.com/casey/just/releases/download/${JUST_VERSION}/just-${JUST_VERSION}-${JUST_ARCH}.tar.gz" | tar -xz -C /usr/local/bin just
         chmod +x /usr/local/bin/just
     fi
@@ -672,15 +671,17 @@ if ! sudo -u $USERNAME bash -c 'command -v uv' >/dev/null 2>&1; then
     FAIL_OK=0
 fi
 
-# Install pre-commit if not present
-if ! sudo -u $USERNAME bash -c 'command -v pre-commit' >/dev/null 2>&1; then
-    log "Installing pre-commit..."
-    set +e
-    FAIL_OK=1
-    sudo -u $USERNAME bash -c 'export PATH="$HOME/.local/bin:$PATH" && uv tool install pre-commit' || log "Warning: Failed to install pre-commit"
-    set -e
-    FAIL_OK=0
-fi
+# Install Python dev tools (prek, ruff, mypy) if not present
+for _uv_tool in prek ruff mypy; do
+    if ! sudo -u $USERNAME bash -c "command -v $_uv_tool" >/dev/null 2>&1; then
+        log "Installing $_uv_tool..."
+        set +e
+        FAIL_OK=1
+        sudo -u $USERNAME bash -c "export PATH=\"\$HOME/.local/bin:\$PATH\" && uv tool install $_uv_tool" || log "Warning: Failed to install $_uv_tool"
+        set -e
+        FAIL_OK=0
+    fi
+done
 
 # Install zoxide if not present
 if ! sudo -u $USERNAME bash -c 'command -v zoxide' >/dev/null 2>&1; then
@@ -728,7 +729,7 @@ if [ ! -d "/usr/local/go" ]; then
     set +e
     FAIL_OK=1
     ARCH=$(dpkg --print-architecture)
-    GO_VERSION="1.25.4"
+    GO_VERSION="1.26.0"
     if [ "$ARCH" = "amd64" ]; then
         GO_ARCH="amd64"
     elif [ "$ARCH" = "arm64" ]; then

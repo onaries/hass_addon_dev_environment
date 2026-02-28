@@ -179,8 +179,8 @@ RUN ARCH=$(dpkg --print-architecture) && \
         FZF_ARCH=""; \
     fi && \
     if [ -n "$FZF_ARCH" ]; then \
-        FZF_VERSION=$(curl -s https://api.github.com/repos/junegunn/fzf/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//' || echo "0.60.3") && \
-        [ -z "$FZF_VERSION" ] && FZF_VERSION="0.60.3" ; \
+        FZF_VERSION=$(curl -s https://api.github.com/repos/junegunn/fzf/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//' || echo "0.68.0") && \
+        [ -z "$FZF_VERSION" ] && FZF_VERSION="0.68.0" ; \
         curl -fsSL "https://github.com/junegunn/fzf/releases/download/v${FZF_VERSION}/fzf-${FZF_VERSION}-${FZF_ARCH}.tar.gz" | tar -xz -C /usr/local/bin fzf; \
     fi
 
@@ -210,8 +210,8 @@ RUN ARCH=$(dpkg --print-architecture) && \
         ST_ARCH=""; \
     fi && \
     if [ -n "$ST_ARCH" ]; then \
-        ST_VERSION=$(curl -s https://api.github.com/repos/syncthing/syncthing/releases/latest | jq -r '.tag_name // empty' || echo "v1.27.12") && \
-        [ -z "$ST_VERSION" ] && ST_VERSION="v1.27.12" ; \
+        ST_VERSION=$(curl -s https://api.github.com/repos/syncthing/syncthing/releases/latest | jq -r '.tag_name // empty' || echo "v2.0.14") && \
+        [ -z "$ST_VERSION" ] && ST_VERSION="v2.0.14" ; \
         curl -fsSL "https://github.com/syncthing/syncthing/releases/download/${ST_VERSION}/syncthing-${ST_ARCH}-${ST_VERSION}.tar.gz" | tar -xz -C /tmp && \
         mv /tmp/syncthing-${ST_ARCH}-${ST_VERSION}/syncthing /usr/local/bin/ && \
         rm -rf /tmp/syncthing-${ST_ARCH}-${ST_VERSION}; \
