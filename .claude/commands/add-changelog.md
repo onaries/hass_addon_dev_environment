@@ -11,10 +11,17 @@ Generate and maintain project changelog: $ARGUMENTS
 
 ## Current State
 
-- Existing changelog: @CHANGELOG.md (if exists)
+- Root changelog: @CHANGELOG.md (if exists)
+- Addon changelog: @python_dev_env/CHANGELOG.md (if exists)
 - Recent commits: !`git log --oneline -10`
 - Current version: !`git describe --tags --abbrev=0 2>/dev/null || echo "No tags found"`
+- Addon version: !`grep '^version:' python_dev_env/config.yaml 2>/dev/null || echo "Not found"`
 - Package version: @package.json (if exists)
+
+## Important
+
+- **Both changelog files must be updated**: `CHANGELOG.md` (root) and `python_dev_env/CHANGELOG.md` (addon)
+- If a version is specified in arguments, also update `python_dev_env/config.yaml` version field
 
 ## Task
 

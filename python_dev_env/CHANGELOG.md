@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.25] - 2026-03-01
+
+### Added
+
+- prek (Rust 기반 pre-commit 대체 도구) 설치 추가 (`uv tool install prek`)
+- ruff, mypy Python 정적 분석 도구 설치 추가 (`uv tool install`, 컨테이너 재시작 시 자동 복구)
+- 대시보드 외부 포트(8100) 직접 접근 지원 (`config.yaml` 포트 매핑 및 `dashboard_port` 옵션 추가)
+- 대시보드 프로젝트 목록 카드: `/workspace/projects` 스캔, git 브랜치 및 최근 수정일 표시
+- 대시보드 서비스 로그 뷰어: 서비스별 탭 UI, 최근 300줄, 에러 전용 필터
+- `.gitignore` 추가 (`__pycache__/`, `*.pyc` 등 Python 캐시 파일 제외)
+
+### Changed
+
+- zoxide를 `z` 대신 `cd` 명령으로 대체 (`zoxide init zsh --cmd cd`)
+- 대시보드 도구 감지 개선: `env.sh` 소싱으로 NVM/Cargo/Go PATH 포함, 단일 bash 세션 배치 실행 (~0.6s)
+- 대시보드 응답에 `Cache-Control: no-cache` 헤더 추가 (HA ingress 캐시 방지)
+- McFly zsh 히스토리 파일 영구 저장소 이전 (`/data/zsh_history` → `~/.zsh_history` 심링크)
+- 주요 도구 폴백 버전 업데이트:
+  - fzf `0.60.3` → `0.68.0`
+  - syncthing `1.27.12` → `2.0.14`
+  - gitui `0.27.0` → `0.28.0`
+  - just `1.36.0` → `1.46.0`
+  - Go `1.25.4` → `1.26.0`
+
 ## [1.2.24] - 2026-02-26
 
 ### Added
