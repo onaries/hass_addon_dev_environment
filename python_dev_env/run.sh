@@ -834,7 +834,7 @@ fi
 
 # Setup persistent zsh history for mcfly
 if [ ! -f "/data/zsh_history" ]; then
-    sudo -u $USERNAME touch /data/zsh_history
+    touch /data/zsh_history
 fi
 chown $USERNAME:$USERNAME /data/zsh_history
 sudo -u $USERNAME ln -sf /data/zsh_history /home/$USERNAME/.zsh_history
@@ -1123,6 +1123,10 @@ chmod 600 /etc/ssh/ssh_host_* 2>/dev/null || true
 # Setup user SSH keys persistent storage
 mkdir -p /data/user_ssh_keys
 chown $USERNAME:$USERNAME /data/user_ssh_keys
+
+mkdir -p /home/$USERNAME/.ssh
+chown $USERNAME:$USERNAME /home/$USERNAME/.ssh
+chmod 700 /home/$USERNAME/.ssh
 
 # Generate or restore user SSH key
 if [ ! -f "/data/user_ssh_keys/id_ed25519" ]; then
