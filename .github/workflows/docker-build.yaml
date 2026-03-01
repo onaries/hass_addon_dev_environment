@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/docker-build.yaml'
+      - 'python_dev_env/**'
   workflow_dispatch:
     inputs:
       tag:
@@ -25,13 +31,72 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Build image for smoke test
+        run: |
+          docker build \
+            --build-arg BUILD_FROM=ghcr.io/home-assistant/amd64-base-debian:bookworm \
+            -t local/python-dev-env:smoke \
+            python_dev_env
+
+      - name: Smoke test run.sh startup
+        run: |
+          set -euo pipefail
+
+          CONTAINER_NAME="dev-env-smoke-run"
+          VOLUME_NAME="dev-env-smoke-data"
+
+          cleanup() {
+            docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+            docker volume rm -f "$VOLUME_NAME" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          docker volume create "$VOLUME_NAME" >/dev/null
+          docker run --rm -v "$VOLUME_NAME:/data" local/python-dev-env:smoke sh -c 'mkdir -p /data/user_local/share/zinit && printf "{}\n" > /data/options.json'
+
+          CID=$(docker run -d --name "$CONTAINER_NAME" -v "$VOLUME_NAME:/data" -v /var/run/docker.sock:/var/run/docker.sock local/python-dev-env:smoke /run.sh)
+          echo "Smoke test container: $CID"
+
+          RESULT="timeout"
+          for _ in $(seq 1 30); do
+            STATUS=$(docker inspect -f '{{.State.Status}} {{.State.ExitCode}}' "$CONTAINER_NAME")
+            LOGS=$(docker logs "$CONTAINER_NAME" 2>&1 || true)
+
+            if echo "$LOGS" | grep -q "FATAL:"; then
+              RESULT="fatal"
+              break
+            fi
+
+            if echo "$LOGS" | grep -q "Starting services via supervisord..."; then
+              RESULT="started"
+              break
+            fi
+
+            if echo "$STATUS" | grep -q '^exited'; then
+              RESULT="exited"
+              break
+            fi
+
+            sleep 10
+          done
+
+          echo "Smoke result: $RESULT"
+          docker logs "$CONTAINER_NAME" 2>&1 | tail -n 300 || true
+
+          if [ "$RESULT" != "started" ]; then
+            echo "run.sh smoke test failed"
+            exit 1
+          fi
+
       - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           username: ${{ env.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract version and release info
+        if: github.event_name != 'pull_request'
         id: version
         run: |
           if [ -n "${{ github.event.inputs.tag }}" ]; then
@@ -64,6 +129,7 @@ jobs:
           echo "$BODY" > /tmp/release_body.md
 
       - name: Build and push
+        if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v5
         with:
           context: python_dev_env
@@ -77,7 +143,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
