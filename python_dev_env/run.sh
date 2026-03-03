@@ -723,6 +723,15 @@ if ! sudo -u $USERNAME bash -c 'command -v opencode' >/dev/null 2>&1; then
     FAIL_OK=0
 fi
 
+if ! sudo -u $USERNAME bash -c 'command -v qwen-code || command -v qwen' >/dev/null 2>&1; then
+    log "Installing Qwen Code..."
+    set +e
+    FAIL_OK=1
+    sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && (nvm use default >/dev/null 2>&1 || nvm use --delete-prefix default --silent >/dev/null 2>&1 || true) && npm install -g @qwen-code/qwen-code' || log "Warning: Failed to install Qwen Code"
+    set -e
+    FAIL_OK=0
+fi
+
 # Install Go if not present
 if [ ! -d "/usr/local/go" ]; then
     log "Installing Go..."
