@@ -625,7 +625,7 @@ if ! command -v bd >/dev/null 2>&1; then
         BD_ARCH="arm64"
     fi
     if [ -n "$BD_ARCH" ]; then
-        BD_VERSION=$(curl -s https://api.github.com/repos/steveyegge/beads/releases/latest | jq -r '.tag_name // "v0.56.1"' | sed 's/^v//')
+        BD_VERSION=$(curl -s https://api.github.com/repos/steveyegge/beads/releases/latest | jq -r '.tag_name // "v0.59.0"' | sed 's/^v//')
         if curl -fsSL "https://github.com/steveyegge/beads/releases/download/v${BD_VERSION}/beads_${BD_VERSION}_linux_${BD_ARCH}.tar.gz" -o /tmp/beads.tar.gz; then
             tar -xzf /tmp/beads.tar.gz -C /usr/local/bin bd 2>/dev/null || tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd /usr/local/bin/ 2>/dev/null || true
             chmod +x /usr/local/bin/bd 2>/dev/null || true
@@ -729,7 +729,7 @@ if [ ! -d "/usr/local/go" ]; then
     set +e
     FAIL_OK=1
     ARCH=$(dpkg --print-architecture)
-    GO_VERSION="1.26.0"
+    GO_VERSION="1.26.1"
     if [ "$ARCH" = "amd64" ]; then
         GO_ARCH="amd64"
     elif [ "$ARCH" = "arm64" ]; then
@@ -1258,6 +1258,27 @@ stderr_logfile=/var/log/supervisor/claude-token-refresh_err.log
 priority=50
 EOF
     log "Claude Code token refresh daemon added to supervisor"
+fi
+
+# Add Dolt SQL server for Beads
+if command -v dolt >/dev/null 2>&1; then
+    mkdir -p /data/dolt_db
+    chown $USERNAME:$USERNAME /data/dolt_db
+    ln -sf /data/dolt_db /home/$USERNAME/dolt_db
+    cat >> /etc/supervisor/conf.d/services.conf << EOF
+
+[program:dolt]
+command=/usr/local/bin/dolt sql-server --host 127.0.0.1 --port 3307 --data-dir /data/dolt_db
+directory=/home/$USERNAME
+environment=HOME="/home/$USERNAME",USER="$USERNAME"
+user=$USERNAME
+autostart=true
+autorestart=true
+stdout_logfile=/var/log/supervisor/dolt.log
+stderr_logfile=/var/log/supervisor/dolt_err.log
+priority=25
+EOF
+    log "Dolt SQL server added to supervisor (port 3307)"
 fi
 
 log "Starting services via supervisord..."
