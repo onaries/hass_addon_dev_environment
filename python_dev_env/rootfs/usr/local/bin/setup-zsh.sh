@@ -215,6 +215,7 @@ ZSHRC_EOF
     command -v delta >/dev/null 2>&1 && delta --generate-completion zsh > "$HOME/.zsh/completions/_delta" 2>/dev/null || true
     command -v bun >/dev/null 2>&1 && bun completions zsh > "$HOME/.zsh/completions/_bun" 2>/dev/null || true
     command -v codex >/dev/null 2>&1 && codex completion zsh > "$HOME/.zsh/completions/_codex" 2>/dev/null || true
+    command -v omx >/dev/null 2>&1 && omx completion zsh > "$HOME/.zsh/completions/_omx" 2>/dev/null || true
     command -v rg >/dev/null 2>&1 && rg --generate complete-zsh > "$HOME/.zsh/completions/_rg" 2>/dev/null || true
 
     print_success ".zshrc generated"
