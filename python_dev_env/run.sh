@@ -704,6 +704,28 @@ if ! command -v act >/dev/null 2>&1; then
     FAIL_OK=0
 fi
 
+# Install himalaya (CLI email client) if not present
+if ! command -v himalaya >/dev/null 2>&1; then
+    log "Installing himalaya..."
+    set +e
+    FAIL_OK=1
+    curl -fsSL https://github.com/pimalaya/himalaya/releases/latest/download/himalaya.x86_64-linux.tgz | tar xz -C /usr/local/bin himalaya
+    chmod +x /usr/local/bin/himalaya
+    set -e
+    FAIL_OK=0
+fi
+
+# Install gws (Google Workspace CLI) if not present
+if ! command -v gws >/dev/null 2>&1; then
+    log "Installing gws..."
+    set +e
+    FAIL_OK=1
+    curl -fsSL https://github.com/googleworkspace/cli/releases/latest/download/gws-x86_64-unknown-linux-gnu.tar.gz | tar xz -C /usr/local/bin gws
+    chmod +x /usr/local/bin/gws
+    set -e
+    FAIL_OK=0
+fi
+
 # Install Claude CLI if not present
 if ! sudo -u $USERNAME bash -c 'command -v claude' >/dev/null 2>&1; then
     log "Installing Claude CLI..."

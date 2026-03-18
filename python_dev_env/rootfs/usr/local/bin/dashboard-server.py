@@ -184,6 +184,13 @@ TOOL_SPECS = [
     ("OpenClaw", "openclaw --version 2>/dev/null | head -1", "openclaw", "ai"),
     ("Qwen Code", "qwen-code --version 2>/dev/null | head -1", "qwen", "ai"),
     ("git-ai-commit", "git-ai-commit --version 2>/dev/null | head -1", "gac", "ai"),
+    (
+        "himalaya",
+        "himalaya --version 2>/dev/null | awk '{print $2}'",
+        "himalaya",
+        "tool",
+    ),
+    ("gws", "gws --version 2>/dev/null | head -1 | awk '{print $NF}'", "gws", "tool"),
 ]
 
 
