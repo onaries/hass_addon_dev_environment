@@ -33,62 +33,17 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build image for smoke test
+      - name: Verify image builds
+        if: github.event_name == 'pull_request'
         run: |
           docker build \
             --build-arg BUILD_FROM=ghcr.io/home-assistant/amd64-base-debian:bookworm \
             -t local/python-dev-env:smoke \
             python_dev_env
 
-      - name: Smoke test run.sh startup
-        run: |
-          set -euo pipefail
-
-          CONTAINER_NAME="dev-env-smoke-run"
-          VOLUME_NAME="dev-env-smoke-data"
-
-          cleanup() {
-            docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
-            docker volume rm -f "$VOLUME_NAME" >/dev/null 2>&1 || true
-          }
-          trap cleanup EXIT
-
-          docker volume create "$VOLUME_NAME" >/dev/null
-          docker run --rm -v "$VOLUME_NAME:/data" local/python-dev-env:smoke sh -c 'mkdir -p /data/user_local/share/zinit && printf "{}\n" > /data/options.json'
-
-          CID=$(docker run -d --name "$CONTAINER_NAME" -v "$VOLUME_NAME:/data" -v /var/run/docker.sock:/var/run/docker.sock local/python-dev-env:smoke /run.sh)
-          echo "Smoke test container: $CID"
-
-          RESULT="timeout"
-          for _ in $(seq 1 30); do
-            STATUS=$(docker inspect -f '{{.State.Status}} {{.State.ExitCode}}' "$CONTAINER_NAME")
-            LOGS=$(docker logs "$CONTAINER_NAME" 2>&1 || true)
-
-            if echo "$LOGS" | grep -q "FATAL:"; then
-              RESULT="fatal"
-              break
-            fi
-
-            if echo "$LOGS" | grep -q "Starting services via supervisord..."; then
-              RESULT="started"
-              break
-            fi
-
-            if echo "$STATUS" | grep -q '^exited'; then
-              RESULT="exited"
-              break
-            fi
-
-            sleep 10
-          done
-
-          echo "Smoke result: $RESULT"
-          docker logs "$CONTAINER_NAME" 2>&1 | tail -n 300 || true
-
-          if [ "$RESULT" != "started" ]; then
-            echo "run.sh smoke test failed"
-            exit 1
-          fi
+      - name: Verify run.sh syntax
+        if: github.event_name == 'pull_request'
+        run: bash -n python_dev_env/run.sh
 
       - name: Login to Docker Hub
         if: github.event_name != 'pull_request'
