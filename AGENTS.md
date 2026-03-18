@@ -269,7 +269,7 @@ version bump in config.yaml → PR to main → merge → auto-tag → Docker bui
 
 ### Required secrets
 - `DOCKERHUB_TOKEN` — Docker Hub access token
-- `RELEASE_PAT` — GitHub PAT with `contents: write` scope (needed to trigger cross-workflow tag events)
+- `PAT_TOKEN` — GitHub PAT with `contents: write` scope (needed to trigger cross-workflow tag events)
 
 ## Important Notes
 
