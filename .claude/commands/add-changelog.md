@@ -22,8 +22,16 @@ Generate and maintain project changelog: $ARGUMENTS
 
 - **Both changelog files must be updated**: `CHANGELOG.md` (root) and `python_dev_env/CHANGELOG.md` (addon)
 - If a version is specified in arguments, also update `python_dev_env/config.yaml` version field
+- If a version is specified (for example `1.2.26`), create or switch to a release branch first: `release/v<version>` (for example `git switch -c release/v1.2.26` or `git switch release/v1.2.26`)
+- Do not perform versioned release changelog work directly on `main` or `develop`
 
 ## Task
+
+0. **Release Branch Preparation (required for versioned release arguments)**
+   ```bash
+   # Example for version argument: 1.2.26
+   git switch -c release/v1.2.26 || git switch release/v1.2.26
+   ```
 
 1. **Changelog Format (Keep a Changelog)**
    ```markdown
