@@ -35,8 +35,10 @@ claude() {
     return $rc
 }
 
-alias codex-update="source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @openai/codex@latest"
+alias codex-update="source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @openai/codex@latest oh-my-codex@latest"
 alias codex-yolo="codex --yolo"
+alias omx-yolo="omx --yolo"
+alias omx-madmax="omx --xhigh --madmax"
 
 alias gac="git-ai-commit"
 

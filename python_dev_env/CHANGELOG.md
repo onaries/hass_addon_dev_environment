@@ -5,13 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.27] - 2026-03-11
+
+### Added
+
+- `host_network: true` 설정 추가 — 호스트 네트워크 모드로 Tailscale 등 호스트 VPN 네트워크 접근 가능
+
 ## [1.2.26] - 2026-03-01
 
 ### Fixed
 
 - `/data/zsh_history` 파일 생성 시 `sudo -u $USERNAME touch`로 실패하던 권한 문제 수정 (root 생성 후 `chown` 유지)
 - 사용자 SSH 키 심링크 생성 전에 `/home/$USERNAME/.ssh` 디렉토리 존재/권한(700) 보장으로 startup FATAL 방지
-
 ## [1.2.25] - 2026-03-01
 
 ### Added

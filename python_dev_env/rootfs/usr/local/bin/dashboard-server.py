@@ -30,7 +30,11 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         # Strip query string for routing
         parts = self.path.split("?", 1)
         path = parts[0]
-        qs = dict(p.split("=", 1) for p in parts[1].split("&") if "=" in p) if len(parts) > 1 else {}
+        qs = (
+            dict(p.split("=", 1) for p in parts[1].split("&") if "=" in p)
+            if len(parts) > 1
+            else {}
+        )
 
         if path == "/api/status":
             self._send_json(collect_all())
@@ -96,7 +100,7 @@ def _run(cmd, timeout=10):
 def _run_as_user(cmd, timeout=10):
     """Run a command as the configured non-root user with full env.sh PATH."""
     # Write command to a temp script to avoid shell quoting/escaping issues
-    wrapped = f'{ENV_SH}\n{cmd}'
+    wrapped = f"{ENV_SH}\n{cmd}"
     try:
         r = subprocess.run(
             ["sudo", "-H", "-u", USERNAME, "bash"],
@@ -137,11 +141,31 @@ TOOL_SPECS = [
     ("Rust", "rustc --version 2>/dev/null | awk '{print $2}'", "rust", "lang"),
     ("Go", "go version 2>/dev/null | awk '{print $3}' | sed 's/go//'", "go", "lang"),
     ("uv", "uv --version 2>/dev/null | awk '{print $2}'", "uv", "lang"),
-    ("Docker", "docker --version 2>/dev/null | awk '{print $3}' | tr -d ','", "docker", "infra"),
-    ("Neovim", "nvim --version 2>/dev/null | head -1 | awk '{print $2}'", "neovim", "tool"),
+    (
+        "Docker",
+        "docker --version 2>/dev/null | awk '{print $3}' | tr -d ','",
+        "docker",
+        "infra",
+    ),
+    (
+        "Neovim",
+        "nvim --version 2>/dev/null | head -1 | awk '{print $2}'",
+        "neovim",
+        "tool",
+    ),
     ("Git", "git --version 2>/dev/null | awk '{print $3}'", "git", "tool"),
-    ("GitHub CLI", "gh --version 2>/dev/null | head -1 | awk '{print $3}'", "github", "tool"),
-    ("ripgrep", "rg --version 2>/dev/null | head -1 | awk '{print $2}'", "ripgrep", "tool"),
+    (
+        "GitHub CLI",
+        "gh --version 2>/dev/null | head -1 | awk '{print $3}'",
+        "github",
+        "tool",
+    ),
+    (
+        "ripgrep",
+        "rg --version 2>/dev/null | head -1 | awk '{print $2}'",
+        "ripgrep",
+        "tool",
+    ),
     ("fzf", "fzf --version 2>/dev/null | awk '{print $1}'", "fzf", "tool"),
     ("zellij", "zellij --version 2>/dev/null | awk '{print $2}'", "zellij", "tool"),
     ("tmux", "tmux -V 2>/dev/null | awk '{print $2}'", "tmux", "tool"),
@@ -155,6 +179,7 @@ TOOL_SPECS = [
     ("act", "act --version 2>/dev/null | awk '{print $3}'", "act", "tool"),
     ("Claude CLI", "claude --version 2>/dev/null | head -1", "claude", "ai"),
     ("Codex CLI", "codex --version 2>/dev/null | head -1", "codex", "ai"),
+    ("OhMyCodex", "omx version 2>/dev/null | head -1", "omx", "ai"),
     ("OpenCode", "opencode version 2>/dev/null | head -1", "opencode", "ai"),
     ("OpenClaw", "openclaw --version 2>/dev/null | head -1", "openclaw", "ai"),
     ("Qwen Code", "qwen-code --version 2>/dev/null | head -1", "qwen", "ai"),
@@ -194,13 +219,15 @@ def get_tool_versions():
     for i, (name, _, icon_id, category) in enumerate(TOOL_SPECS):
         version = versions[i] if i < len(versions) else ""
         installed = bool(version) and "not found" not in version.lower()
-        tools.append({
-            "name": name,
-            "version": version if installed else None,
-            "icon": icon_id,
-            "category": category,
-            "installed": installed,
-        })
+        tools.append(
+            {
+                "name": name,
+                "version": version if installed else None,
+                "icon": icon_id,
+                "category": category,
+                "installed": installed,
+            }
+        )
 
     return tools
 
@@ -323,15 +350,11 @@ def get_projects():
 
         if git_dir.exists():
             # Use git log for accurate last-activity time
-            ts = _run(
-                f"git -C {entry} log -1 --format=%ct 2>/dev/null"
-            )
+            ts = _run(f"git -C {entry} log -1 --format=%ct 2>/dev/null")
             if ts and ts.isdigit():
                 last_modified = datetime.fromtimestamp(int(ts)).isoformat()
             # Current branch
-            branch = _run(
-                f"git -C {entry} rev-parse --abbrev-ref HEAD 2>/dev/null"
-            )
+            branch = _run(f"git -C {entry} rev-parse --abbrev-ref HEAD 2>/dev/null")
 
         if not last_modified:
             # Fallback: directory mtime
@@ -341,13 +364,15 @@ def get_projects():
             except OSError:
                 last_modified = None
 
-        projects.append({
-            "name": entry.name,
-            "path": str(entry),
-            "git": git_dir.exists(),
-            "branch": branch or None,
-            "last_modified": last_modified,
-        })
+        projects.append(
+            {
+                "name": entry.name,
+                "path": str(entry),
+                "git": git_dir.exists(),
+                "branch": branch or None,
+                "last_modified": last_modified,
+            }
+        )
 
     # Sort by last_modified descending (most recent first)
     projects.sort(key=lambda p: p["last_modified"] or "", reverse=True)

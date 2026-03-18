@@ -186,6 +186,12 @@ if [ ! -d "/data/user_local/share/zinit" ]; then
 
     rm -f /data/npm_global/bin/codex 2>/dev/null || true
 
+    # Install OhMyCodex (OMX) - operational runtime for Codex CLI
+    log "Installing OhMyCodex (OMX) for user..."
+    if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g oh-my-codex@latest'; then
+        log "Warning: Failed to install OhMyCodex (continuing)"
+    fi
+
     # Install OpenCode for user
     log "Installing OpenCode for user..."
     if ! sudo -u $USERNAME bash -c 'curl -fsSL https://opencode.ai/install | bash'; then
@@ -220,6 +226,11 @@ if [ ! -d "/data/user_local/share/zinit" ]; then
     log "Installing git-ai-commit CLI..."
     if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @ksw8954/git-ai-commit'; then
         log "Warning: Failed to install git-ai-commit (continuing)"
+    fi
+
+    log "Installing Pyright LSP for user..."
+    if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g pyright'; then
+        log "Warning: Failed to install Pyright (continuing)"
     fi
 
     # Add comprehensive git aliases (oh-my-zsh style)
@@ -378,8 +389,8 @@ GITALIASES
     fi
 
     # Install Python dev tools for user via uv
-    log "Installing Python dev tools (prek, ruff, mypy) for user..."
-    sudo -u $USERNAME bash -c 'export PATH="$HOME/.local/bin:$PATH" && uv tool install prek && uv tool install ruff && uv tool install mypy' || \
+    log "Installing Python dev tools (prek, ruff, mypy, djlint, basedpyright) for user..."
+    sudo -u $USERNAME bash -c 'export PATH="$HOME/.local/bin:$PATH" && uv tool install prek && uv tool install ruff && uv tool install mypy && uv tool install djlint && uv tool install basedpyright' || \
         log "Warning: Failed to install some Python dev tools (continuing)"
 
     log "Installing zoxide for user..."
@@ -466,6 +477,40 @@ if [ ! -d "/home/$USERNAME/.config/nvim" ]; then
     FAIL_OK=0
 fi
 
+# Setup Django LSP configuration for Neovim
+NVIM_PLUGINS_DIR="/home/$USERNAME/.config/nvim/lua/plugins"
+if [ -d "/home/$USERNAME/.config/nvim" ] && [ ! -f "$NVIM_PLUGINS_DIR/django.lua" ]; then
+    log "Installing Django LSP plugin configuration for Neovim..."
+    sudo -u $USERNAME mkdir -p "$NVIM_PLUGINS_DIR"
+    sudo -u $USERNAME cp /etc/nvim/plugins/django.lua "$NVIM_PLUGINS_DIR/django.lua"
+fi
+
+LAZYVIM_JSON="/home/$USERNAME/.config/nvim/lazyvim.json"
+if [ -f "$LAZYVIM_JSON" ]; then
+    if ! grep -q "lang.python" "$LAZYVIM_JSON" 2>/dev/null; then
+        log "Enabling LazyVim Python extras..."
+        TMP_JSON=$(mktemp)
+        if jq '.extras = (.extras + ["lazyvim.plugins.extras.lang.python"] | unique)' "$LAZYVIM_JSON" > "$TMP_JSON" 2>/dev/null; then
+            mv "$TMP_JSON" "$LAZYVIM_JSON"
+            chown $USERNAME:$USERNAME "$LAZYVIM_JSON"
+        else
+            rm -f "$TMP_JSON"
+            log "Warning: Failed to update lazyvim.json (continuing)"
+        fi
+    fi
+elif [ -d "/home/$USERNAME/.config/nvim" ]; then
+    log "Creating lazyvim.json with Python extras..."
+    cat > "$LAZYVIM_JSON" << 'LVJSON_EOF'
+{
+  "extras": [
+    "lazyvim.plugins.extras.lang.python"
+  ],
+  "news": {}
+}
+LVJSON_EOF
+    chown $USERNAME:$USERNAME "$LAZYVIM_JSON"
+fi
+
 # Install Node.js LTS if not present
 if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && node --version' >/dev/null 2>&1; then
     log "Installing Node.js LTS..."
@@ -527,8 +572,10 @@ sudo -u $USERNAME bash -c '
     nvm use default >/dev/null 2>&1 || nvm use --delete-prefix default --silent >/dev/null 2>&1
 
     npm install -g @openai/codex@latest 2>/dev/null || true
+    npm install -g oh-my-codex@latest 2>/dev/null || true
     npm install -g openclaw@latest 2>/dev/null || true
     npm install -g @ksw8954/git-ai-commit@latest 2>/dev/null || true
+    npm install -g pyright@latest 2>/dev/null || true
 ' || log "Warning: Failed to ensure npm global packages"
 set -e
 FAIL_OK=0
@@ -625,7 +672,7 @@ if ! command -v bd >/dev/null 2>&1; then
         BD_ARCH="arm64"
     fi
     if [ -n "$BD_ARCH" ]; then
-        BD_VERSION=$(curl -s https://api.github.com/repos/steveyegge/beads/releases/latest | jq -r '.tag_name // "v0.56.1"' | sed 's/^v//')
+        BD_VERSION=$(curl -s https://api.github.com/repos/steveyegge/beads/releases/latest | jq -r '.tag_name // "v0.59.0"' | sed 's/^v//')
         if curl -fsSL "https://github.com/steveyegge/beads/releases/download/v${BD_VERSION}/beads_${BD_VERSION}_linux_${BD_ARCH}.tar.gz" -o /tmp/beads.tar.gz; then
             tar -xzf /tmp/beads.tar.gz -C /usr/local/bin bd 2>/dev/null || tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd /usr/local/bin/ 2>/dev/null || true
             chmod +x /usr/local/bin/bd 2>/dev/null || true
@@ -672,7 +719,7 @@ if ! sudo -u $USERNAME bash -c 'command -v uv' >/dev/null 2>&1; then
 fi
 
 # Install Python dev tools (prek, ruff, mypy) if not present
-for _uv_tool in prek ruff mypy; do
+for _uv_tool in prek ruff mypy djlint basedpyright; do
     if ! sudo -u $USERNAME bash -c "command -v $_uv_tool" >/dev/null 2>&1; then
         log "Installing $_uv_tool..."
         set +e
@@ -738,7 +785,7 @@ if [ ! -d "/usr/local/go" ]; then
     set +e
     FAIL_OK=1
     ARCH=$(dpkg --print-architecture)
-    GO_VERSION="1.26.0"
+    GO_VERSION="1.26.1"
     if [ "$ARCH" = "amd64" ]; then
         GO_ARCH="amd64"
     elif [ "$ARCH" = "arm64" ]; then
@@ -1267,6 +1314,27 @@ stderr_logfile=/var/log/supervisor/claude-token-refresh_err.log
 priority=50
 EOF
     log "Claude Code token refresh daemon added to supervisor"
+fi
+
+# Add Dolt SQL server for Beads
+if command -v dolt >/dev/null 2>&1; then
+    mkdir -p /data/dolt_db
+    chown $USERNAME:$USERNAME /data/dolt_db
+    ln -sf /data/dolt_db /home/$USERNAME/dolt_db
+    cat >> /etc/supervisor/conf.d/services.conf << EOF
+
+[program:dolt]
+command=/usr/local/bin/dolt sql-server --host 127.0.0.1 --port 3307 --data-dir /data/dolt_db
+directory=/home/$USERNAME
+environment=HOME="/home/$USERNAME",USER="$USERNAME"
+user=$USERNAME
+autostart=true
+autorestart=true
+stdout_logfile=/var/log/supervisor/dolt.log
+stderr_logfile=/var/log/supervisor/dolt_err.log
+priority=25
+EOF
+    log "Dolt SQL server added to supervisor (port 3307)"
 fi
 
 log "Starting services via supervisord..."
