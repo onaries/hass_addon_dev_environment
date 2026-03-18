@@ -248,10 +248,28 @@ fi
 
 ## CI/CD
 
-Git tag push (`v*.*.*`) triggers `.github/workflows/docker-build.yaml`:
-1. Build with `docker/build-push-action` (context: `python_dev_env/`)
-2. Push to Docker Hub: `ksw8954/python-dev-env:{version}` + `:latest`
-3. Create GitHub Release with auto-generated changelog
+Two workflows in `.github/workflows/`:
+
+### auto-tag.yaml (PR merge → auto tag)
+1. Triggers when PR is merged to `main`
+2. Reads version from `python_dev_env/config.yaml`
+3. Creates annotated tag `v{version}` if it doesn't exist (uses `RELEASE_PAT` secret)
+4. Tag push triggers `docker-build.yaml` below
+
+### docker-build.yaml (tag → Docker build + release)
+1. Triggers on tag push (`v*.*.*`) or `workflow_dispatch`
+2. Build with `docker/build-push-action` (context: `python_dev_env/`)
+3. Push to Docker Hub: `ksw8954/python-dev-env:{version}` + `:latest`
+4. Create GitHub Release with auto-generated changelog
+
+### Release flow
+```
+version bump in config.yaml → PR to main → merge → auto-tag → Docker build → GitHub Release
+```
+
+### Required secrets
+- `DOCKERHUB_TOKEN` — Docker Hub access token
+- `PAT_TOKEN` — GitHub PAT with `contents: write` scope (needed to trigger cross-workflow tag events)
 
 ## Important Notes
 

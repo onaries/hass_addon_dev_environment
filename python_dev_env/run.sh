@@ -233,6 +233,11 @@ if [ ! -d "/data/user_local/share/zinit" ]; then
         log "Warning: Failed to install Pyright (continuing)"
     fi
 
+    log "Installing TypeScript LSP for user..."
+    if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g typescript typescript-language-server'; then
+        log "Warning: Failed to install TypeScript LSP (continuing)"
+    fi
+
     # Add comprehensive git aliases (oh-my-zsh style)
     cat >> /home/$USERNAME/.aliases << 'GITALIASES'
 
@@ -576,6 +581,7 @@ sudo -u $USERNAME bash -c '
     npm install -g openclaw@latest 2>/dev/null || true
     npm install -g @ksw8954/git-ai-commit@latest 2>/dev/null || true
     npm install -g pyright@latest 2>/dev/null || true
+    npm install -g typescript@latest typescript-language-server@latest 2>/dev/null || true
 ' || log "Warning: Failed to ensure npm global packages"
 set -e
 FAIL_OK=0
@@ -766,6 +772,15 @@ if ! sudo -u $USERNAME bash -c 'command -v opencode' >/dev/null 2>&1; then
     set +e
     FAIL_OK=1
     sudo -u $USERNAME bash -c 'curl -fsSL https://opencode.ai/install | bash' || log "Warning: Failed to install OpenCode"
+    set -e
+    FAIL_OK=0
+fi
+
+if ! sudo -u $USERNAME bash -c 'command -v qwen-code || command -v qwen' >/dev/null 2>&1; then
+    log "Installing Qwen Code..."
+    set +e
+    FAIL_OK=1
+    sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && (nvm use default >/dev/null 2>&1 || nvm use --delete-prefix default --silent >/dev/null 2>&1 || true) && npm install -g @qwen-code/qwen-code' || log "Warning: Failed to install Qwen Code"
     set -e
     FAIL_OK=0
 fi
