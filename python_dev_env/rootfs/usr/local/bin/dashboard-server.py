@@ -115,6 +115,17 @@ def _run_as_user(cmd, timeout=10):
         return ""
 
 
+def _get_addon_version():
+    """Read addon version from config.yaml baked into the image."""
+    try:
+        for line in Path("/etc/addon-config.yaml").read_text().splitlines():
+            if line.startswith("version:"):
+                return line.split(":", 1)[1].strip().strip('"').strip("'")
+    except Exception:
+        pass
+    return None
+
+
 def collect_all():
     """Aggregate every status section into one response."""
     return {
@@ -122,6 +133,7 @@ def collect_all():
         "hostname": _run("hostname") or "unknown",
         "uptime": (_run("uptime -p") or "").replace("up ", ""),
         "username": USERNAME,
+        "addon_version": _get_addon_version(),
         "tools": get_tool_versions(),
         "services": get_service_status(),
         "recent_logins": get_recent_logins(),
@@ -180,7 +192,7 @@ TOOL_SPECS = [
     ("Claude CLI", "claude --version 2>/dev/null | head -1", "claude", "ai"),
     ("Codex CLI", "codex --version 2>/dev/null | head -1", "codex", "ai"),
     ("OhMyCodex", "omx version 2>/dev/null | head -1", "omx", "ai"),
-    ("OpenCode", "opencode version 2>/dev/null | head -1", "opencode", "ai"),
+    ("OpenCode", "opencode --version 2>/dev/null | head -1", "opencode", "ai"),
     ("OpenClaw", "openclaw --version 2>/dev/null | head -1", "openclaw", "ai"),
     ("Qwen Code", "qwen-code --version 2>/dev/null | head -1", "qwen", "ai"),
     ("git-ai-commit", "git-ai-commit --version 2>/dev/null | head -1", "gac", "ai"),
