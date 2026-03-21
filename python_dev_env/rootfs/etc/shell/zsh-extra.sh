@@ -2,6 +2,7 @@ bindkey '\t' menu-complete
 bindkey "${terminfo[kcbt]}" reverse-menu-complete
 setopt MENU_COMPLETE
 
+compdef g=git
 eval "$(zoxide init zsh --cmd cd)"
 eval "$(mcfly init zsh)"
 

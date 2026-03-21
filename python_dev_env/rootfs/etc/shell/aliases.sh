@@ -42,6 +42,7 @@ alias omx-madmax="omx --xhigh --madmax"
 
 alias gac="git-ai-commit"
 
+alias g="git"
 alias gst="git status"
 alias gss="git status -s"
 alias gaa="git add --all"

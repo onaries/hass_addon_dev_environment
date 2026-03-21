@@ -40,3 +40,8 @@ if [ -d "/data/claude_config" ]; then
         ln -sf /data/claude_config/.claude.json "$HOME/.claude.json"
     fi
 fi
+
+# Load user secrets from persistent storage
+if [ -f /data/.env.secrets ]; then
+    set -a; source /data/.env.secrets; set +a
+fi

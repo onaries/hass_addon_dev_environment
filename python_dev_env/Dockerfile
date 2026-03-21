@@ -268,6 +268,7 @@ RUN mkdir -p /workspace
 # Set working directory
 WORKDIR /workspace
 
+COPY config.yaml /etc/addon-config.yaml
 COPY rootfs/ /
 COPY run.sh /
 RUN chmod a+x /run.sh

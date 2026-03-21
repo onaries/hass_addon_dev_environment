@@ -459,6 +459,14 @@ GITALIASES
         rm -f get-docker.sh
     fi
 
+    # Install TPM (Tmux Plugin Manager) and tmux config
+    log "Installing tmux configuration and TPM..."
+    sudo -u $USERNAME git clone https://github.com/tmux-plugins/tpm /home/$USERNAME/.tmux/plugins/tpm || log "Warning: Failed to clone TPM"
+    if [ -f /etc/tmux/tmux.conf ]; then
+        sudo -u $USERNAME cp /etc/tmux/tmux.conf /home/$USERNAME/.tmux.conf
+        log "tmux configuration installed"
+    fi
+
     chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
 
     # Re-enable exit on error for critical sections
@@ -700,6 +708,28 @@ if ! command -v act >/dev/null 2>&1; then
     set +e
     FAIL_OK=1
     curl -fsSL https://raw.githubusercontent.com/nektos/act/master/install.sh | BINDIR=/usr/local/bin bash
+    set -e
+    FAIL_OK=0
+fi
+
+# Install himalaya (CLI email client) if not present
+if ! command -v himalaya >/dev/null 2>&1; then
+    log "Installing himalaya..."
+    set +e
+    FAIL_OK=1
+    curl -fsSL https://github.com/pimalaya/himalaya/releases/latest/download/himalaya.x86_64-linux.tgz | tar xz -C /usr/local/bin himalaya
+    chmod +x /usr/local/bin/himalaya
+    set -e
+    FAIL_OK=0
+fi
+
+# Install gws (Google Workspace CLI) if not present
+if ! command -v gws >/dev/null 2>&1; then
+    log "Installing gws..."
+    set +e
+    FAIL_OK=1
+    curl -fsSL https://github.com/googleworkspace/cli/releases/latest/download/gws-x86_64-unknown-linux-gnu.tar.gz | tar xz -C /usr/local/bin gws
+    chmod +x /usr/local/bin/gws
     set -e
     FAIL_OK=0
 fi
@@ -1050,6 +1080,18 @@ if [ ! -L "/home/$USERNAME/.qwen" ]; then
     sudo -u $USERNAME ln -sf /data/qwen_config /home/$USERNAME/.qwen
 fi
 
+# Setup tmux persistent storage (TPM + plugins + config)
+mkdir -p /data/tmux_data
+chown $USERNAME:$USERNAME /data/tmux_data
+
+if [ ! -L "/home/$USERNAME/.tmux" ]; then
+    if [ -d "/home/$USERNAME/.tmux" ]; then
+        sudo -u $USERNAME cp -r /home/$USERNAME/.tmux/. /data/tmux_data/ 2>/dev/null || true
+        rm -rf /home/$USERNAME/.tmux
+    fi
+    sudo -u $USERNAME ln -sf /data/tmux_data /home/$USERNAME/.tmux
+fi
+
 # Setup Bun persistent storage
 mkdir -p /data/bun_home
 chown $USERNAME:$USERNAME /data/bun_home
@@ -1060,6 +1102,21 @@ if [ ! -L "/home/$USERNAME/.bun" ]; then
         rm -rf /home/$USERNAME/.bun
     fi
     sudo -u $USERNAME ln -sf /data/bun_home /home/$USERNAME/.bun
+fi
+
+# Install TPM and tmux config if not present (after persistent storage symlink)
+if [ ! -d "/home/$USERNAME/.tmux/plugins/tpm" ]; then
+    log "Installing TPM (Tmux Plugin Manager)..."
+    set +e
+    FAIL_OK=1
+    sudo -u $USERNAME mkdir -p /home/$USERNAME/.tmux/plugins
+    sudo -u $USERNAME git clone https://github.com/tmux-plugins/tpm /home/$USERNAME/.tmux/plugins/tpm
+    set -e
+    FAIL_OK=0
+fi
+if [ -f /etc/tmux/tmux.conf ] && [ ! -f "/home/$USERNAME/.tmux.conf" ]; then
+    log "Installing tmux configuration..."
+    sudo -u $USERNAME cp /etc/tmux/tmux.conf /home/$USERNAME/.tmux.conf
 fi
 
 # Setup user scripts persistent storage (synced via Syncthing)
