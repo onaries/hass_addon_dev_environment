@@ -139,6 +139,7 @@ def collect_all():
         "recent_logins": get_recent_logins(),
         "tmux_sessions": get_tmux_sessions(),
         "projects": get_projects(),
+        "env_secrets": get_env_secrets(),
     }
 
 
@@ -203,6 +204,7 @@ TOOL_SPECS = [
         "tool",
     ),
     ("gws", "gws --version 2>/dev/null | head -1 | awk '{print $NF}'", "gws", "tool"),
+    ("yazi", "yazi --version 2>/dev/null | head -1 | awk '{print $2}'", "yazi", "tool"),
 ]
 
 
@@ -349,6 +351,33 @@ def get_tmux_sessions():
                 }
             )
     return sessions
+
+
+def get_env_secrets():
+    """List environment variable names from /data/.env.secrets (values masked)."""
+    secrets_file = Path("/data/.env.secrets")
+    if not secrets_file.is_file():
+        return []
+    secrets = []
+    try:
+        for line in secrets_file.read_text().splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if "=" in line:
+                key, _, value = line.partition("=")
+                key = key.strip()
+                if key:
+                    # Mask value: show first 4 chars then ***
+                    value = value.strip()
+                    if len(value) > 4:
+                        masked = value[:4] + "***"
+                    else:
+                        masked = "***"
+                    secrets.append({"name": key, "masked_value": masked})
+    except OSError:
+        pass
+    return secrets
 
 
 def get_projects():
