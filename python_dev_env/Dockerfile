@@ -217,6 +217,26 @@ RUN ARCH=$(dpkg --print-architecture) && \
         rm -rf /tmp/syncthing-${ST_ARCH}-${ST_VERSION}; \
     fi
 
+# Install yazi terminal file manager from pre-compiled binary
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "amd64" ]; then \
+        YAZI_ARCH="x86_64-unknown-linux-musl"; \
+    elif [ "$ARCH" = "arm64" ]; then \
+        YAZI_ARCH="aarch64-unknown-linux-musl"; \
+    else \
+        YAZI_ARCH=""; \
+    fi && \
+    if [ -n "$YAZI_ARCH" ]; then \
+        YAZI_VERSION=$(curl -s https://api.github.com/repos/sxyazi/yazi/releases/latest | jq -r '.tag_name // empty' || echo "v26.1.22") && \
+        [ -z "$YAZI_VERSION" ] && YAZI_VERSION="v26.1.22" ; \
+        curl -fsSL "https://github.com/sxyazi/yazi/releases/download/${YAZI_VERSION}/yazi-${YAZI_ARCH}.zip" -o /tmp/yazi.zip && \
+        unzip -o /tmp/yazi.zip -d /tmp/yazi && \
+        mv /tmp/yazi/yazi-${YAZI_ARCH}/yazi /usr/local/bin/ && \
+        mv /tmp/yazi/yazi-${YAZI_ARCH}/ya /usr/local/bin/ && \
+        chmod +x /usr/local/bin/yazi /usr/local/bin/ya && \
+        rm -rf /tmp/yazi /tmp/yazi.zip; \
+    fi
+
 # Configure git to use delta as pager
 RUN git config --system core.pager delta && \
     git config --system interactive.diffFilter "delta --color-only" && \
