@@ -186,9 +186,11 @@ All user data MUST persist in `/data/`:
 | `/data/user_ssh_keys` | User SSH keypair + config + known_hosts |
 | `/data/claude_config` | `~/.claude` + `~/.claude.json` |
 | `/data/codex_config` | `~/.codex` |
+| `/data/ctx7_config` | `~/.context7` (Context7 CLI OAuth credentials) |
 | `/data/openclaw_config` | `~/.openclaw` |
 | `/data/qwen_config` | `~/.qwen` |
 | `/data/cli_proxy_api` | `~/.cli-proxy-api` |
+| `/data/agents_config` | `~/.agents` (AI agent skills and config) |
 | `/data/git_ai_commit_config` | `~/.git-ai-commit` |
 | `/data/bun_home` | `~/.bun` |
 | `/data/syncthing_config` | `~/.config/syncthing` |

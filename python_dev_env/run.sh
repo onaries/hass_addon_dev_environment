@@ -734,6 +734,26 @@ if ! command -v gws >/dev/null 2>&1; then
     FAIL_OK=0
 fi
 
+# Install glab (GitLab CLI) if not present
+if ! command -v glab >/dev/null 2>&1; then
+    log "Installing glab (GitLab CLI)..."
+    set +e
+    FAIL_OK=1
+    ARCH=$(dpkg --print-architecture)
+    if [ "$ARCH" = "amd64" ]; then
+        GLAB_ARCH="linux-amd64"
+    elif [ "$ARCH" = "arm64" ]; then
+        GLAB_ARCH="linux-arm64"
+    fi
+    if [ -n "$GLAB_ARCH" ]; then
+        curl -fsSL "https://gitlab.com/gitlab-org/cli/-/releases/latest/download/glab_${GLAB_ARCH}.deb" -o /tmp/glab.deb
+        dpkg -i /tmp/glab.deb || apt-get install -f -y
+        rm -f /tmp/glab.deb
+    fi
+    set -e
+    FAIL_OK=0
+fi
+
 # Install Claude CLI if not present
 if ! sudo -u $USERNAME bash -c 'command -v claude' >/dev/null 2>&1; then
     log "Installing Claude CLI..."
@@ -1080,6 +1100,30 @@ if [ ! -L "/home/$USERNAME/.qwen" ]; then
     sudo -u $USERNAME ln -sf /data/qwen_config /home/$USERNAME/.qwen
 fi
 
+# Setup ctx7 persistent storage (Context7 CLI OAuth credentials)
+mkdir -p /data/ctx7_config
+chown $USERNAME:$USERNAME /data/ctx7_config
+
+if [ ! -L "/home/$USERNAME/.context7" ]; then
+    if [ -d "/home/$USERNAME/.context7" ]; then
+        sudo -u $USERNAME cp -r /home/$USERNAME/.context7/. /data/ctx7_config/ 2>/dev/null || true
+        rm -rf /home/$USERNAME/.context7
+    fi
+    sudo -u $USERNAME ln -sf /data/ctx7_config /home/$USERNAME/.context7
+fi
+
+# Setup .agents persistent storage (AI agent skills and config)
+mkdir -p /data/agents_config
+chown $USERNAME:$USERNAME /data/agents_config
+
+if [ ! -L "/home/$USERNAME/.agents" ]; then
+    if [ -d "/home/$USERNAME/.agents" ]; then
+        sudo -u $USERNAME cp -r /home/$USERNAME/.agents/. /data/agents_config/ 2>/dev/null || true
+        rm -rf /home/$USERNAME/.agents
+    fi
+    sudo -u $USERNAME ln -sf /data/agents_config /home/$USERNAME/.agents
+fi
+
 # Setup tmux persistent storage (TPM + plugins + config)
 mkdir -p /data/tmux_data
 chown $USERNAME:$USERNAME /data/tmux_data
@@ -1345,23 +1389,35 @@ EOF
     log "CLIProxyAPI added to supervisor"
 fi
 
+# Install wrapper script for OpenClaw port conflict resolution
+if [ -f "/usr/local/bin/openclaw-wrapper.sh" ]; then
+    log "Installing OpenClaw wrapper script..."
+    sudo -u $USERNAME mkdir -p /home/$USERNAME/.local/bin
+    sudo -u $USERNAME cp /usr/local/bin/openclaw-wrapper.sh /home/$USERNAME/.local/bin/
+    sudo -u $USERNAME chmod +x /home/$USERNAME/.local/bin/openclaw-wrapper.sh
+fi
+
 OPENCLAW_BIN=$(sudo -u $USERNAME bash -c 'cd /home/'"$USERNAME"' 2>/dev/null; source /opt/nvm/nvm.sh && which openclaw 2>/dev/null')
 if [ -n "$OPENCLAW_BIN" ]; then
     OPENCLAW_NODE_DIR=$(dirname "$OPENCLAW_BIN")
     cat >> /etc/supervisor/conf.d/services.conf << EOF
 
 [program:openclaw]
-command=$OPENCLAW_BIN gateway --port 18789
+command=/home/$USERNAME/.local/bin/openclaw-wrapper.sh
 directory=/home/$USERNAME
-environment=HOME="/home/$USERNAME",USER="$USERNAME",PATH="$OPENCLAW_NODE_DIR:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",XDG_CONFIG_HOME="/home/$USERNAME/.config",XDG_DATA_HOME="/home/$USERNAME/.local/share"
+environment=HOME="/home/$USERNAME",USER="$USERNAME",PATH="/home/$USERNAME/.local/bin:$OPENCLAW_NODE_DIR:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",XDG_CONFIG_HOME="/home/$USERNAME/.config",XDG_DATA_HOME="/home/$USERNAME/.local/share"
 user=$USERNAME
 autostart=true
 autorestart=true
+startsecs=5
+startretries=3
+stopwaitsecs=10
+exitcodes=0,2
 stdout_logfile=/var/log/supervisor/openclaw.log
 stderr_logfile=/var/log/supervisor/openclaw_err.log
 priority=40
 EOF
-    log "OpenClaw gateway added to supervisor (port 18789)"
+    log "OpenClaw gateway added to supervisor with port conflict resolver (port 18789)"
 fi
 
 # Add Claude Code token refresh daemon
