@@ -728,7 +728,7 @@ if ! command -v gws >/dev/null 2>&1; then
     log "Installing gws..."
     set +e
     FAIL_OK=1
-    curl -fsSL https://github.com/googleworkspace/cli/releases/latest/download/gws-x86_64-unknown-linux-gnu.tar.gz | tar xz -C /usr/local/bin gws
+    curl -fsSL https://github.com/googleworkspace/cli/releases/latest/download/google-workspace-cli-x86_64-unknown-linux-gnu.tar.gz | tar xz -C /usr/local/bin gws
     chmod +x /usr/local/bin/gws
     set -e
     FAIL_OK=0
@@ -746,7 +746,8 @@ if ! command -v glab >/dev/null 2>&1; then
         GLAB_ARCH="linux-arm64"
     fi
     if [ -n "$GLAB_ARCH" ]; then
-        curl -fsSL "https://gitlab.com/gitlab-org/cli/-/releases/latest/download/glab_${GLAB_ARCH}.deb" -o /tmp/glab.deb
+        GLAB_URL="https://gitlab.com/gitlab-org/cli/-/releases/latest/download/glab_${GLAB_ARCH}.deb"
+        curl -fsSL "$GLAB_URL" -o /tmp/glab.deb
         dpkg -i /tmp/glab.deb || apt-get install -f -y
         rm -f /tmp/glab.deb
     fi
