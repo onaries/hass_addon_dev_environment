@@ -4,6 +4,18 @@
 
 PORT=18789
 
+# Load NVM and find openclaw
+export NVM_DIR="/opt/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+OPENCLAW_BIN=$(which openclaw 2>/dev/null)
+
+if [ -z "$OPENCLAW_BIN" ]; then
+    echo "[openclaw-wrapper] ERROR: openclaw binary not found"
+    exit 1
+fi
+
+echo "[openclaw-wrapper] Found openclaw at: $OPENCLAW_BIN"
+
 # Find and kill any processes using the port
 echo "[openclaw-wrapper] Checking for processes using port $PORT..."
 
@@ -36,4 +48,4 @@ fi
 sleep 1
 
 echo "[openclaw-wrapper] Starting openclaw..."
-exec /opt/nvm/versions/node/v24.14.0/bin/openclaw gateway --port $PORT "$@"
+exec "$OPENCLAW_BIN" gateway --port $PORT "$@"
