@@ -8,6 +8,8 @@ export PATH="$HOME/.local/bin:$PATH"
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
+export PATH="$HOME/.opencode/bin:$PATH"
+
 export RUSTUP_HOME="/data/rust_cargo/rustup"
 export CARGO_HOME="/data/rust_cargo/cargo"
 export PATH="/data/rust_cargo/cargo/bin:$PATH"

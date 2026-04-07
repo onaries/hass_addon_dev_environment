@@ -205,6 +205,7 @@ TOOL_SPECS = [
     ),
     ("gws", "gws --version 2>/dev/null | head -1 | awk '{print $NF}'", "gws", "tool"),
     ("yazi", "yazi --version 2>/dev/null | head -1 | awk '{print $2}'", "yazi", "tool"),
+    ("glab", "glab --version 2>/dev/null | head -1 | awk '{print $3}'", "glab", "tool"),
 ]
 
 
