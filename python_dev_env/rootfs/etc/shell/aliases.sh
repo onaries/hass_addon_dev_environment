@@ -1,6 +1,14 @@
 alias vim="nvim"
 alias vi="nvim"
 
+# Package update
+alias update-all="sudo update-packages.sh --all"
+alias update-system="sudo update-packages.sh --system"
+alias update-bun="sudo update-packages.sh --bun"
+alias update-python="sudo update-packages.sh --python"
+alias update-binary="sudo update-packages.sh --binary"
+alias update-cli="sudo update-packages.sh --cli"
+
 # Use lsd instead of ls
 alias ls="lsd"
 alias ll="lsd -l"
@@ -35,7 +43,12 @@ claude() {
     return $rc
 }
 
-alias codex-update="source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @openai/codex@latest oh-my-codex@latest"
+codex-update() {
+    export BUN_INSTALL="$HOME/.bun"
+    export PATH="$BUN_INSTALL/bin:$PATH"
+    bun install -g @openai/codex@latest oh-my-codex@latest &&
+        omx setup --scope user --skill-target codex-home
+}
 alias codex-yolo="codex --yolo"
 alias omx-yolo="omx --yolo"
 alias omx-madmax="omx --xhigh --madmax"

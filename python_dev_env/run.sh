@@ -180,7 +180,7 @@ if [ ! -d "/data/user_local/share/zinit" ]; then
     fi
 
     log "Installing Codex CLI for user..."
-    if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @openai/codex@latest'; then
+    if ! sudo -u $USERNAME bash -c 'export BUN_INSTALL="$HOME/.bun" && export PATH="$BUN_INSTALL/bin:$PATH" && bun install -g @openai/codex@latest'; then
         log "Warning: Failed to install Codex CLI (continuing)"
     fi
 
@@ -188,7 +188,7 @@ if [ ! -d "/data/user_local/share/zinit" ]; then
 
     # Install OhMyCodex (OMX) - operational runtime for Codex CLI
     log "Installing OhMyCodex (OMX) for user..."
-    if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g oh-my-codex@latest'; then
+    if ! sudo -u $USERNAME bash -c 'export BUN_INSTALL="$HOME/.bun" && export PATH="$BUN_INSTALL/bin:$PATH" && bun install -g oh-my-codex@latest'; then
         log "Warning: Failed to install OhMyCodex (continuing)"
     fi
 
@@ -210,9 +210,9 @@ if [ ! -d "/data/user_local/share/zinit" ]; then
         log "Warning: Failed to install OpenChamber (continuing)"
     fi
 
-    # Install OpenClaw for user (requires Node.js >= 22)
+    # Install OpenClaw for user
     log "Installing OpenClaw for user..."
-    if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && npm install -g openclaw@latest'; then
+    if ! sudo -u $USERNAME bash -c 'export BUN_INSTALL="$HOME/.bun" && export PATH="$BUN_INSTALL/bin:$PATH" && bun install -g openclaw@latest'; then
         log "Warning: Failed to install OpenClaw (continuing)"
     fi
 
@@ -224,17 +224,17 @@ if [ ! -d "/data/user_local/share/zinit" ]; then
 
     # Install git-ai-commit CLI for conventional commit generation
     log "Installing git-ai-commit CLI..."
-    if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g @ksw8954/git-ai-commit'; then
+    if ! sudo -u $USERNAME bash -c 'export BUN_INSTALL="$HOME/.bun" && export PATH="$BUN_INSTALL/bin:$PATH" && bun install -g @ksw8954/git-ai-commit'; then
         log "Warning: Failed to install git-ai-commit (continuing)"
     fi
 
     log "Installing Pyright LSP for user..."
-    if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g pyright'; then
+    if ! sudo -u $USERNAME bash -c 'export BUN_INSTALL="$HOME/.bun" && export PATH="$BUN_INSTALL/bin:$PATH" && bun install -g pyright'; then
         log "Warning: Failed to install Pyright (continuing)"
     fi
 
     log "Installing TypeScript LSP for user..."
-    if ! sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && nvm use default >/dev/null && npm install -g typescript typescript-language-server'; then
+    if ! sudo -u $USERNAME bash -c 'export BUN_INSTALL="$HOME/.bun" && export PATH="$BUN_INSTALL/bin:$PATH" && bun install -g typescript typescript-language-server'; then
         log "Warning: Failed to install TypeScript LSP (continuing)"
     fi
 
@@ -577,20 +577,20 @@ if [ ! -d "/home/$USERNAME/cliproxyapi" ]; then
     FAIL_OK=0
 fi
 
-log "Ensuring npm global packages are available..."
+log "Ensuring bun global packages are available..."
 set +e
 FAIL_OK=1
 sudo -u $USERNAME bash -c '
-    source /opt/nvm/nvm.sh
-    nvm use default >/dev/null 2>&1 || nvm use --delete-prefix default --silent >/dev/null 2>&1
+    export BUN_INSTALL="$HOME/.bun"
+    export PATH="$BUN_INSTALL/bin:$PATH"
 
-    npm install -g @openai/codex@latest 2>/dev/null || true
-    npm install -g oh-my-codex@latest 2>/dev/null || true
-    npm install -g openclaw@latest 2>/dev/null || true
-    npm install -g @ksw8954/git-ai-commit@latest 2>/dev/null || true
-    npm install -g pyright@latest 2>/dev/null || true
-    npm install -g typescript@latest typescript-language-server@latest 2>/dev/null || true
-' || log "Warning: Failed to ensure npm global packages"
+    bun install -g @openai/codex@latest 2>/dev/null || true
+    bun install -g oh-my-codex@latest 2>/dev/null || true
+    bun install -g openclaw@latest 2>/dev/null || true
+    bun install -g @ksw8954/git-ai-commit@latest 2>/dev/null || true
+    bun install -g pyright@latest 2>/dev/null || true
+    bun install -g typescript@latest typescript-language-server@latest 2>/dev/null || true
+' || log "Warning: Failed to ensure bun global packages"
 set -e
 FAIL_OK=0
 
@@ -831,7 +831,7 @@ if ! sudo -u $USERNAME bash -c 'command -v qwen-code || command -v qwen' >/dev/n
     log "Installing Qwen Code..."
     set +e
     FAIL_OK=1
-    sudo -u $USERNAME bash -c 'source /opt/nvm/nvm.sh && (nvm use default >/dev/null 2>&1 || nvm use --delete-prefix default --silent >/dev/null 2>&1 || true) && npm install -g @qwen-code/qwen-code' || log "Warning: Failed to install Qwen Code"
+    sudo -u $USERNAME bash -c 'export BUN_INSTALL="$HOME/.bun" && export PATH="$BUN_INSTALL/bin:$PATH" && bun install -g @qwen-code/qwen-code' || log "Warning: Failed to install Qwen Code"
     set -e
     FAIL_OK=0
 fi
@@ -1024,6 +1024,28 @@ if [ ! -L "/root/.codex" ]; then
     ln -sf /data/codex_config /root/.codex
 fi
 
+# Setup OhMyCodex (OMX) persistent storage
+mkdir -p /data/omx_config
+chown "$USERNAME:$USERNAME" /data/omx_config
+
+if [ ! -L "/home/$USERNAME/.omx" ]; then
+    if [ -d "/home/$USERNAME/.omx" ]; then
+        sudo -u "$USERNAME" cp -r "/home/$USERNAME/.omx/." /data/omx_config/ 2>/dev/null || true
+        rm -rf "/home/$USERNAME/.omx"
+    fi
+    sudo -u "$USERNAME" ln -sf /data/omx_config "/home/$USERNAME/.omx"
+fi
+
+if [ ! -L "/root/.omx" ]; then
+    if [ -d "/root/.omx" ]; then
+        cp -r /root/.omx/. /data/omx_config/ 2>/dev/null || true
+        rm -rf /root/.omx
+    fi
+    ln -sf /data/omx_config /root/.omx
+fi
+
+chown -R "$USERNAME:$USERNAME" /data/omx_config 2>/dev/null || true
+
 # Setup OpenClaw persistent storage
 mkdir -p /data/openclaw_config
 chown $USERNAME:$USERNAME /data/openclaw_config
@@ -1148,6 +1170,32 @@ if [ ! -L "/home/$USERNAME/.bun" ]; then
     fi
     sudo -u $USERNAME ln -sf /data/bun_home /home/$USERNAME/.bun
 fi
+
+# Configure OhMyCodex (OMX) after Codex/OMX/Bun storage is persistent.
+# Upstream install guidance: https://github.com/Yeachan-Heo/oh-my-codex
+log "Configuring OhMyCodex (OMX)..."
+set +e
+FAIL_OK=1
+sudo -H -u "$USERNAME" bash -c '
+    export NVM_DIR="/opt/nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+    nvm use default >/dev/null 2>&1 || nvm use --delete-prefix default --silent >/dev/null 2>&1 || true
+
+    export BUN_INSTALL="$HOME/.bun"
+    export PATH="$BUN_INSTALL/bin:$HOME/.local/bin:$PATH"
+
+    if ! command -v omx >/dev/null 2>&1; then
+        bun install -g oh-my-codex@latest >/dev/null 2>&1 || npm install -g oh-my-codex@latest
+    fi
+
+    if command -v omx >/dev/null 2>&1; then
+        omx setup --scope user --skill-target codex-home
+    else
+        exit 1
+    fi
+' || log "Warning: Failed to configure OhMyCodex (continuing)"
+set -e
+FAIL_OK=0
 
 # Install TPM and tmux config if not present (after persistent storage symlink)
 if [ ! -d "/home/$USERNAME/.tmux/plugins/tpm" ]; then
