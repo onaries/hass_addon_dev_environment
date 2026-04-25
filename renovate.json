@@ -1,28 +1,240 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": [
+    "config:recommended"
+  ],
   "timezone": "Asia/Seoul",
   "dependencyDashboard": true,
-  "labels": ["dependencies"],
+  "labels": [
+    "dependencies"
+  ],
   "prConcurrentLimit": 5,
   "prHourlyLimit": 2,
   "rebaseWhen": "conflicted",
   "packageRules": [
     {
       "description": "Group GitHub Actions updates",
-      "matchManagers": ["github-actions"],
+      "matchManagers": [
+        "github-actions"
+      ],
       "groupName": "github actions"
     },
     {
       "description": "Group Docker image updates",
-      "matchManagers": ["dockerfile", "docker-compose"],
+      "matchManagers": [
+        "dockerfile",
+        "docker-compose"
+      ],
       "groupName": "docker images"
     },
     {
       "description": "Automerge safe patch/minor GitHub Actions updates",
-      "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest"
+      ],
       "automerge": true
+    },
+    {
+      "description": "Group script fallback versions tracked via custom regex",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDatasources": [
+        "github-releases",
+        "github-tags"
+      ],
+      "groupName": "GitHub release fallbacks"
+    }
+  ],
+  "customManagers": [
+    {
+      "description": "Track nvm installer version in Dockerfile",
+      "customType": "regex",
+      "fileMatch": [
+        "/^python_dev_env/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "raw\\.githubusercontent\\.com/nvm-sh/nvm/v(?<currentValue>\\d+\\.\\d+\\.\\d+)/install\\.sh"
+      ],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "nvm-sh/nvm",
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "description": "Track ripgrep fallback version in Dockerfile",
+      "customType": "regex",
+      "fileMatch": [
+        "/^python_dev_env/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "RG_VERSION=\"(?<currentValue>v?\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "BurntSushi/ripgrep",
+      "versioningTemplate": "semver-coerced"
+    },
+    {
+      "description": "Track delta fallback version in Dockerfile",
+      "customType": "regex",
+      "fileMatch": [
+        "/^python_dev_env/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "DELTA_VERSION=\"(?<currentValue>v?\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "dandavison/delta",
+      "versioningTemplate": "semver-coerced"
+    },
+    {
+      "description": "Track zellij fallback version in Dockerfile",
+      "customType": "regex",
+      "fileMatch": [
+        "/^python_dev_env/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "ZELLIJ_VERSION=\"(?<currentValue>v?\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "zellij-org/zellij",
+      "versioningTemplate": "semver-coerced"
+    },
+    {
+      "description": "Track lsd fallback version in Dockerfile",
+      "customType": "regex",
+      "fileMatch": [
+        "/^python_dev_env/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "LSD_VERSION=\"(?<currentValue>v?\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "lsd-rs/lsd",
+      "versioningTemplate": "semver-coerced"
+    },
+    {
+      "description": "Track duf fallback version in Dockerfile",
+      "customType": "regex",
+      "fileMatch": [
+        "/^python_dev_env/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "DUF_VERSION=\"(?<currentValue>v?\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "muesli/duf",
+      "versioningTemplate": "semver-coerced"
+    },
+    {
+      "description": "Track fzf fallback version in Dockerfile",
+      "customType": "regex",
+      "fileMatch": [
+        "/^python_dev_env/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "FZF_VERSION=\"(?<currentValue>v?\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "junegunn/fzf",
+      "versioningTemplate": "semver-coerced"
+    },
+    {
+      "description": "Track mcfly fallback version in Dockerfile",
+      "customType": "regex",
+      "fileMatch": [
+        "/^python_dev_env/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "MCFLY_VERSION=\"(?<currentValue>v?\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "cantino/mcfly",
+      "versioningTemplate": "semver-coerced"
+    },
+    {
+      "description": "Track syncthing fallback version in Dockerfile",
+      "customType": "regex",
+      "fileMatch": [
+        "/^python_dev_env/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "ST_VERSION=\"(?<currentValue>v?\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "syncthing/syncthing",
+      "versioningTemplate": "semver-coerced"
+    },
+    {
+      "description": "Track yazi fallback version in Dockerfile",
+      "customType": "regex",
+      "fileMatch": [
+        "/^python_dev_env/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "YAZI_VERSION=\"(?<currentValue>v?\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "sxyazi/yazi",
+      "versioningTemplate": "semver-coerced"
+    },
+    {
+      "description": "Track GitUI fallback version in run.sh",
+      "customType": "regex",
+      "fileMatch": [
+        "/^python_dev_env/run\\.sh$/"
+      ],
+      "matchStrings": [
+        "GITUI_VERSION=\\$\\(.*?\"(?<currentValue>v?\\d+\\.\\d+\\.\\d+)\".*?\\)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "gitui-org/gitui",
+      "versioningTemplate": "semver-coerced"
+    },
+    {
+      "description": "Track Just fallback version in run.sh",
+      "customType": "regex",
+      "fileMatch": [
+        "/^python_dev_env/run\\.sh$/"
+      ],
+      "matchStrings": [
+        "JUST_VERSION=\\$\\(.*?\"(?<currentValue>v?\\d+\\.\\d+\\.\\d+)\".*?\\)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "casey/just",
+      "versioningTemplate": "semver-coerced"
+    },
+    {
+      "description": "Track Beads fallback version in run.sh",
+      "customType": "regex",
+      "fileMatch": [
+        "/^python_dev_env/run\\.sh$/"
+      ],
+      "matchStrings": [
+        "BD_VERSION=\\$\\(.*?\"(?<currentValue>v?\\d+\\.\\d+\\.\\d+)\".*?\\)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "steveyegge/beads",
+      "versioningTemplate": "semver-coerced"
+    },
+    {
+      "description": "Track Go toolchain version in run.sh",
+      "customType": "regex",
+      "fileMatch": [
+        "/^python_dev_env/run\\.sh$/"
+      ],
+      "matchStrings": [
+        "GO_VERSION=\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "golang/go",
+      "versioningTemplate": "semver-coerced",
+      "extractVersionTemplate": "^go(?<version>\\d+\\.\\d+\\.\\d+)$"
     }
   ]
 }
