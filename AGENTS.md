@@ -76,6 +76,7 @@ run.sh executes in this order:
 | dashboard | `python3 /usr/local/bin/dashboard-server.py` | always |
 | cliproxyapi | `cli-proxy-api --config ...` | if CLIProxyAPI installed + config exists |
 | openclaw | `openclaw gateway --port 18789` | if openclaw binary found |
+| hermes-gateway | `hermes gateway run` | if Hermes Agent binary found |
 | claude-token-refresh | `/usr/local/bin/claude-token-refresh.sh` | if `.claude/.credentials.json` exists |
 | dolt | `dolt sql-server --port 3307` | if dolt binary found |
 
@@ -195,6 +196,7 @@ All user data MUST persist in `/data/`:
 | `/data/bun_home` | `~/.bun` |
 | `/data/syncthing_config` | `~/.config/syncthing` |
 | `/data/user_scripts` | `~/scripts` (synced via Syncthing) |
+| `/data/hermes_config` | `~/.hermes` (Hermes Agent config, source, sessions, logs, skills, memory) |
 | `/data/zsh_history` | `~/.zsh_history` |
 | `/data/dolt_db` | Dolt database files |
 

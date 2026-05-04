@@ -21,6 +21,7 @@ ports:
   "8317/tcp": 8317
   "8384/tcp": 8384
   "8100/tcp": 8100
+  "8787/tcp": 8787
   "18789/tcp": 18789
   "22000/tcp": 22000
   "22000/udp": 22000
@@ -29,6 +30,7 @@ ports_description:
   "8317/tcp": "CLIProxyAPI"
   "8384/tcp": "Syncthing Web GUI"
   "8100/tcp": "Dashboard Web UI"
+  "8787/tcp": "Hermes Agent Web UI"
   "18789/tcp": "OpenClaw Gateway"
   "22000/tcp": "Syncthing file transfer"
   "22000/udp": "Syncthing QUIC transfer"
@@ -53,6 +55,10 @@ options:
   git_email: ""
   cliproxy_api_keys: []
   dashboard_port: 8100
+  hermes_webui_port: 8787
+  fireworks_api_key: ""
+  hermes_provider: "openai-codex"
+  hermes_model: "gpt-5.5"
 schema:
   ssh_keys:
     - str?
@@ -65,3 +71,7 @@ schema:
   cliproxy_api_keys:
     - str?
   dashboard_port: int(1,65535)?
+  hermes_webui_port: int(1,65535)?
+  fireworks_api_key: password?
+  hermes_provider: str?
+  hermes_model: str?

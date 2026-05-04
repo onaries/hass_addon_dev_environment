@@ -71,6 +71,10 @@ USERNAME=$(jq -r '.username // "developer"' $CONFIG_PATH)
 GIT_NAME=$(jq -r '.git_name // ""' $CONFIG_PATH)
 GIT_EMAIL=$(jq -r '.git_email // ""' $CONFIG_PATH)
 CLIPROXY_API_KEYS=$(jq -r '.cliproxy_api_keys // [] | .[]' $CONFIG_PATH)
+HERMES_PROVIDER=$(jq -r '.hermes_provider // "openai-codex"' $CONFIG_PATH)
+HERMES_MODEL=$(jq -r '.hermes_model // "gpt-5.5"' $CONFIG_PATH)
+HERMES_WEBUI_PORT=$(jq -r '.hermes_webui_port // 8787' $CONFIG_PATH)
+FIREWORKS_API_KEY_OPTION=$(jq -r '.fireworks_api_key // ""' $CONFIG_PATH)
 
 log "Configuring Docker access..."
 
@@ -1147,6 +1151,154 @@ if [ ! -L "/home/$USERNAME/.agents" ]; then
     sudo -u $USERNAME ln -sf /data/agents_config /home/$USERNAME/.agents
 fi
 
+# Setup Hermes Agent persistent storage
+mkdir -p /data/hermes_config
+chown "$USERNAME:$USERNAME" /data/hermes_config
+
+if [ ! -L "/home/$USERNAME/.hermes" ]; then
+    if [ -d "/home/$USERNAME/.hermes" ]; then
+        sudo -u "$USERNAME" cp -rn "/home/$USERNAME/.hermes/." /data/hermes_config/ 2>/dev/null || true
+        rm -rf "/home/$USERNAME/.hermes"
+    fi
+    sudo -u "$USERNAME" ln -sf /data/hermes_config "/home/$USERNAME/.hermes"
+fi
+
+if [ ! -L "/root/.hermes" ]; then
+    if [ -d "/root/.hermes" ]; then
+        cp -rn /root/.hermes/. /data/hermes_config/ 2>/dev/null || true
+        rm -rf /root/.hermes
+    fi
+    ln -sf /data/hermes_config /root/.hermes
+fi
+
+chown -R "$USERNAME:$USERNAME" /data/hermes_config 2>/dev/null || true
+
+# Install and configure Hermes Agent after ~/.hermes points at persistent /data storage.
+log "Ensuring Hermes Agent is installed and configured..."
+set +e
+FAIL_OK=1
+if ! sudo -H -u "$USERNAME" bash -c 'export PATH="$HOME/.local/bin:$PATH"; command -v hermes >/dev/null 2>&1'; then
+    log "Installing Hermes Agent for $USERNAME..."
+    sudo -H -u "$USERNAME" bash -c 'export PATH="$HOME/.local/bin:$PATH"; curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash' || \
+        log "Warning: Failed to install Hermes Agent (continuing)"
+fi
+set -e
+FAIL_OK=0
+
+if sudo -H -u "$USERNAME" bash -c 'export PATH="$HOME/.local/bin:$PATH"; command -v hermes >/dev/null 2>&1'; then
+    HERMES_ENV_FILE="/data/hermes_config/.env"
+    HERMES_CONFIG_FILE="/data/hermes_config/config.yaml"
+    touch "$HERMES_ENV_FILE"
+    chown "$USERNAME:$USERNAME" "$HERMES_ENV_FILE"
+    chmod 600 "$HERMES_ENV_FILE" 2>/dev/null || true
+
+    # Prefer the add-on option, but also allow /data/.env.secrets to provide FIREWORKS_API_KEY.
+    FIREWORKS_API_KEY_VALUE="$FIREWORKS_API_KEY_OPTION"
+    if [ -z "$FIREWORKS_API_KEY_VALUE" ] && [ -f /data/.env.secrets ]; then
+        set +u
+        set -a
+        # shellcheck source=/dev/null
+        source /data/.env.secrets
+        set +a
+        FIREWORKS_API_KEY_VALUE="${FIREWORKS_API_KEY:-}"
+    fi
+    if [ -n "$FIREWORKS_API_KEY_VALUE" ]; then
+        if grep -q '^FIREWORKS_API_KEY=' "$HERMES_ENV_FILE" 2>/dev/null; then
+            python3 - "$HERMES_ENV_FILE" "$FIREWORKS_API_KEY_VALUE" <<'PY'
+import pathlib, sys
+path = pathlib.Path(sys.argv[1])
+key = sys.argv[2]
+lines = path.read_text().splitlines() if path.exists() else []
+with path.open('w') as f:
+    replaced = False
+    for line in lines:
+        if line.startswith('FIREWORKS_API_KEY='):
+            f.write(f'FIREWORKS_API_KEY={key}\n')
+            replaced = True
+        else:
+            f.write(line + '\n')
+    if not replaced:
+        f.write(f'FIREWORKS_API_KEY={key}\n')
+PY
+        else
+            printf '\nFIREWORKS_API_KEY=%s\n' "$FIREWORKS_API_KEY_VALUE" >> "$HERMES_ENV_FILE"
+        fi
+        chown "$USERNAME:$USERNAME" "$HERMES_ENV_FILE"
+        chmod 600 "$HERMES_ENV_FILE" 2>/dev/null || true
+    fi
+
+    if [ -f "$HERMES_CONFIG_FILE" ]; then
+        HERMES_PYTHON="/data/hermes_config/hermes-agent/venv/bin/python"
+        [ -x "$HERMES_PYTHON" ] || HERMES_PYTHON="/home/$USERNAME/.hermes/hermes-agent/venv/bin/python"
+        sudo -H -u "$USERNAME" env HERMES_PROVIDER="$HERMES_PROVIDER" HERMES_MODEL="$HERMES_MODEL" \
+            "$HERMES_PYTHON" - "$HERMES_CONFIG_FILE" <<'PY' || log "Warning: Failed to configure Hermes Fireworks provider"
+import os, pathlib, sys, yaml
+path = pathlib.Path(sys.argv[1])
+data = yaml.safe_load(path.read_text()) or {}
+provider = os.environ.get('HERMES_PROVIDER') or 'fireworks-ai'
+model = os.environ.get('HERMES_MODEL') or 'accounts/fireworks/routers/glm-5-fast'
+data.setdefault('providers', {})[provider] = {
+    'name': 'Fireworks AI',
+    'base_url': 'https://api.fireworks.ai/inference/v1',
+    'key_env': 'FIREWORKS_API_KEY',
+    'default_model': model,
+    'api_mode': 'chat_completions',
+}
+data.setdefault('model', {})['provider'] = provider
+data.setdefault('model', {})['default'] = model
+data.setdefault('delegation', {})['provider'] = provider
+data.setdefault('delegation', {})['model'] = model
+path.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True))
+PY
+        chown "$USERNAME:$USERNAME" "$HERMES_CONFIG_FILE"
+    fi
+else
+    log "Warning: Hermes command is not available; gateway supervisor service will be skipped"
+fi
+
+# Install Hermes Web UI into persistent storage. It is a lightweight Python/vanilla JS
+# app that reuses the existing Hermes Agent install and config under /data/hermes_config.
+log "Ensuring Hermes Web UI is installed..."
+set +e
+FAIL_OK=1
+HERMES_WEBUI_DIR="/data/hermes_webui"
+mkdir -p "$HERMES_WEBUI_DIR" /data/hermes_config/webui
+chown -R "$USERNAME:$USERNAME" "$HERMES_WEBUI_DIR" /data/hermes_config/webui 2>/dev/null || true
+if [ -d "$HERMES_WEBUI_DIR/.git" ]; then
+    sudo -H -u "$USERNAME" git -C "$HERMES_WEBUI_DIR" fetch --depth 1 origin master >/dev/null 2>&1 && \
+        sudo -H -u "$USERNAME" git -C "$HERMES_WEBUI_DIR" reset --hard origin/master >/dev/null 2>&1 || \
+        log "Warning: Failed to update Hermes Web UI (continuing)"
+elif command -v git >/dev/null 2>&1; then
+    rm -rf "$HERMES_WEBUI_DIR"
+    mkdir -p "$HERMES_WEBUI_DIR"
+    chown "$USERNAME:$USERNAME" "$HERMES_WEBUI_DIR"
+    sudo -H -u "$USERNAME" git clone --depth 1 https://github.com/nesquena/hermes-webui.git "$HERMES_WEBUI_DIR" || \
+        log "Warning: Failed to clone Hermes Web UI (continuing)"
+else
+    log "Warning: git is not available; Hermes Web UI install skipped"
+fi
+if [ -d "$HERMES_WEBUI_DIR" ]; then
+    cat > "$HERMES_WEBUI_DIR/.env" <<EOF
+HERMES_WEBUI_HOST=0.0.0.0
+HERMES_WEBUI_PORT=$HERMES_WEBUI_PORT
+HERMES_WEBUI_STATE_DIR=/data/hermes_config/webui
+HERMES_WEBUI_DEFAULT_WORKSPACE=/workspace
+HERMES_HOME=/home/$USERNAME/.hermes
+HERMES_WEBUI_AGENT_DIR=/home/$USERNAME/.hermes/hermes-agent
+EOF
+    chown "$USERNAME:$USERNAME" "$HERMES_WEBUI_DIR/.env"
+    chmod 600 "$HERMES_WEBUI_DIR/.env" 2>/dev/null || true
+    if [ -f "$HERMES_WEBUI_DIR/bootstrap.py" ]; then
+        sudo -H -u "$USERNAME" bash -c 'cd /data/hermes_webui && export PATH="$HOME/.local/bin:$PATH"; python3 - <<"PY"
+import bootstrap
+agent_dir = bootstrap.discover_agent_dir()
+bootstrap.ensure_python_has_webui_deps(bootstrap.discover_launcher_python(agent_dir), agent_dir)
+PY' || log "Warning: Failed to prepare Hermes Web UI dependencies (continuing)"
+    fi
+fi
+set -e
+FAIL_OK=0
+
 # Setup tmux persistent storage (TPM + plugins + config)
 mkdir -p /data/tmux_data
 chown $USERNAME:$USERNAME /data/tmux_data
@@ -1484,6 +1636,51 @@ EOF
     log "Claude Code token refresh daemon added to supervisor"
 fi
 
+# Add Hermes Agent gateway. Home Assistant add-ons are supervised by supervisord,
+# so run the gateway in foreground instead of installing a systemd user service.
+HERMES_BIN=$(sudo -H -u "$USERNAME" bash -c 'export PATH="$HOME/.local/bin:$PATH"; command -v hermes 2>/dev/null' || true)
+if [ -n "$HERMES_BIN" ]; then
+    cat >> /etc/supervisor/conf.d/services.conf << EOF
+
+[program:hermes-gateway]
+command=$HERMES_BIN gateway run
+directory=/home/$USERNAME
+environment=HOME="/home/$USERNAME",USER="$USERNAME",PATH="/home/$USERNAME/.local/bin:/data/rust_cargo/cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",HERMES_HOME="/home/$USERNAME/.hermes"
+user=$USERNAME
+autostart=true
+autorestart=true
+startsecs=5
+startretries=3
+stopwaitsecs=20
+stdout_logfile=/var/log/supervisor/hermes-gateway.log
+stderr_logfile=/var/log/supervisor/hermes-gateway_err.log
+priority=60
+EOF
+    log "Hermes Agent gateway added to supervisor"
+fi
+
+# Add Hermes Agent Web UI. Use --foreground so supervisord tracks the long-lived
+# server process instead of a bootstrap helper that exits after spawning it.
+if [ -f "/data/hermes_webui/start.sh" ]; then
+    cat >> /etc/supervisor/conf.d/services.conf << EOF
+
+[program:hermes-webui]
+command=/bin/bash /data/hermes_webui/start.sh --foreground --host 0.0.0.0 $HERMES_WEBUI_PORT
+directory=/data/hermes_webui
+environment=HOME="/home/$USERNAME",USER="$USERNAME",PATH="/home/$USERNAME/.local/bin:/data/rust_cargo/cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",HERMES_HOME="/home/$USERNAME/.hermes",HERMES_WEBUI_AGENT_DIR="/home/$USERNAME/.hermes/hermes-agent",HERMES_WEBUI_STATE_DIR="/data/hermes_config/webui",HERMES_WEBUI_DEFAULT_WORKSPACE="/workspace",HERMES_WEBUI_HOST="0.0.0.0",HERMES_WEBUI_PORT="$HERMES_WEBUI_PORT",HERMES_WEBUI_FOREGROUND="1"
+user=$USERNAME
+autostart=true
+autorestart=true
+startsecs=5
+startretries=3
+stopwaitsecs=20
+stdout_logfile=/var/log/supervisor/hermes-webui.log
+stderr_logfile=/var/log/supervisor/hermes-webui_err.log
+priority=65
+EOF
+    log "Hermes Agent Web UI added to supervisor (port $HERMES_WEBUI_PORT)"
+fi
+
 # Add Dolt SQL server for Beads
 if command -v dolt >/dev/null 2>&1; then
     mkdir -p /data/dolt_db
@@ -1508,6 +1705,7 @@ fi
 log "Starting services via supervisord..."
 log "SSH is available on port $SSH_PORT"
 log "Syncthing GUI is available on port 8384"
+log "Hermes Agent Web UI is available on port $HERMES_WEBUI_PORT"
 log "Use 'supervisorctl status' to check service status"
 
 exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
