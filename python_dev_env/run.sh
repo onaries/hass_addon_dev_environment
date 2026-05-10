@@ -610,7 +610,7 @@ if ! command -v gitui >/dev/null 2>&1; then
         GITUI_ARCH="aarch64"
     fi
     if [ -n "$GITUI_ARCH" ]; then
-        GITUI_VERSION=$(curl -s https://api.github.com/repos/gitui-org/gitui/releases/latest | jq -r '.tag_name // "v0.28.0"')
+        GITUI_VERSION=$(curl -s https://api.github.com/repos/gitui-org/gitui/releases/latest | jq -r '.tag_name // "v0.28.1"')
         if curl -fsSL "https://github.com/gitui-org/gitui/releases/download/${GITUI_VERSION}/gitui-linux-${GITUI_ARCH}.tar.gz" -o /tmp/gitui.tar.gz; then
             tar -xzf /tmp/gitui.tar.gz -C /tmp && mv /tmp/gitui /usr/local/bin/ && chmod +x /usr/local/bin/gitui
         fi
@@ -647,7 +647,7 @@ if ! command -v just >/dev/null 2>&1; then
         JUST_ARCH="aarch64-unknown-linux-musl"
     fi
     if [ -n "$JUST_ARCH" ]; then
-        JUST_VERSION=$(curl -s https://api.github.com/repos/casey/just/releases/latest | jq -r '.tag_name // "1.46.0"')
+        JUST_VERSION=$(curl -s https://api.github.com/repos/casey/just/releases/latest | jq -r '.tag_name // "1.51.0"')
         curl -fsSL "https://github.com/casey/just/releases/download/${JUST_VERSION}/just-${JUST_VERSION}-${JUST_ARCH}.tar.gz" | tar -xz -C /usr/local/bin just
         chmod +x /usr/local/bin/just
     fi
@@ -690,7 +690,7 @@ if ! command -v bd >/dev/null 2>&1; then
         BD_ARCH="arm64"
     fi
     if [ -n "$BD_ARCH" ]; then
-        BD_VERSION=$(curl -s https://api.github.com/repos/steveyegge/beads/releases/latest | jq -r '.tag_name // "v0.59.0"' | sed 's/^v//')
+        BD_VERSION=$(curl -s https://api.github.com/repos/steveyegge/beads/releases/latest | jq -r '.tag_name // "v1.0.4"' | sed 's/^v//')
         if curl -fsSL "https://github.com/steveyegge/beads/releases/download/v${BD_VERSION}/beads_${BD_VERSION}_linux_${BD_ARCH}.tar.gz" -o /tmp/beads.tar.gz; then
             tar -xzf /tmp/beads.tar.gz -C /usr/local/bin bd 2>/dev/null || tar -xzf /tmp/beads.tar.gz -C /tmp && mv /tmp/bd /usr/local/bin/ 2>/dev/null || true
             chmod +x /usr/local/bin/bd 2>/dev/null || true
@@ -846,7 +846,7 @@ if [ ! -d "/usr/local/go" ]; then
     set +e
     FAIL_OK=1
     ARCH=$(dpkg --print-architecture)
-    GO_VERSION="1.26.1"
+    GO_VERSION="1.26.3"
     if [ "$ARCH" = "amd64" ]; then
         GO_ARCH="amd64"
     elif [ "$ARCH" = "arm64" ]; then

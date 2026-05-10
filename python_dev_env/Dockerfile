@@ -85,8 +85,8 @@ RUN ARCH=$(dpkg --print-architecture) && \
         DELTA_ARCH=""; \
     fi && \
     if [ -n "$DELTA_ARCH" ]; then \
-        DELTA_VERSION=$(curl -s https://api.github.com/repos/dandavison/delta/releases/latest | jq -r '.tag_name // empty' || echo "0.18.2") && \
-        [ -z "$DELTA_VERSION" ] && DELTA_VERSION="0.18.2" ; \
+        DELTA_VERSION=$(curl -s https://api.github.com/repos/dandavison/delta/releases/latest | jq -r '.tag_name // empty' || echo "0.19.2") && \
+        [ -z "$DELTA_VERSION" ] && DELTA_VERSION="0.19.2" ; \
         curl -fsSL "https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/delta-${DELTA_VERSION}-${DELTA_ARCH}.tar.gz" | tar -xz -C /tmp && \
         mv /tmp/delta-${DELTA_VERSION}-${DELTA_ARCH}/delta /usr/local/bin/ && \
         rm -rf /tmp/delta-${DELTA_VERSION}-${DELTA_ARCH}; \
@@ -96,7 +96,7 @@ RUN ARCH=$(dpkg --print-architecture) && \
 ENV NVM_DIR=/opt/nvm
 ENV NODE_VERSION=lts/*
 RUN mkdir -p $NVM_DIR && \
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash && \
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash && \
     . $NVM_DIR/nvm.sh && \
     nvm install $NODE_VERSION && \
     nvm alias default $NODE_VERSION && \
@@ -130,8 +130,8 @@ RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
 
 # Install zellij from pre-compiled binary (x86_64 only, skip on other architectures)
 RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
-        ZELLIJ_VERSION=$(curl -s https://api.github.com/repos/zellij-org/zellij/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//' || echo "0.43.1") && \
-        [ -z "$ZELLIJ_VERSION" ] && ZELLIJ_VERSION="0.43.1" ; \
+        ZELLIJ_VERSION=$(curl -s https://api.github.com/repos/zellij-org/zellij/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//' || echo "0.44.2") && \
+        [ -z "$ZELLIJ_VERSION" ] && ZELLIJ_VERSION="0.44.2" ; \
         curl -fsSL "https://github.com/zellij-org/zellij/releases/download/v${ZELLIJ_VERSION}/zellij-x86_64-unknown-linux-musl.tar.gz" | tar -xz -C /tmp && \
         mv /tmp/zellij /usr/local/bin/; \
     fi
@@ -179,8 +179,8 @@ RUN ARCH=$(dpkg --print-architecture) && \
         FZF_ARCH=""; \
     fi && \
     if [ -n "$FZF_ARCH" ]; then \
-        FZF_VERSION=$(curl -s https://api.github.com/repos/junegunn/fzf/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//' || echo "0.70.0") && \
-        [ -z "$FZF_VERSION" ] && FZF_VERSION="0.70.0" ; \
+        FZF_VERSION=$(curl -s https://api.github.com/repos/junegunn/fzf/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//' || echo "0.72.0") && \
+        [ -z "$FZF_VERSION" ] && FZF_VERSION="0.72.0" ; \
         curl -fsSL "https://github.com/junegunn/fzf/releases/download/v${FZF_VERSION}/fzf-${FZF_VERSION}-${FZF_ARCH}.tar.gz" | tar -xz -C /usr/local/bin fzf; \
     fi
 
@@ -210,8 +210,8 @@ RUN ARCH=$(dpkg --print-architecture) && \
         ST_ARCH=""; \
     fi && \
     if [ -n "$ST_ARCH" ]; then \
-        ST_VERSION=$(curl -s https://api.github.com/repos/syncthing/syncthing/releases/latest | jq -r '.tag_name // empty' || echo "v2.0.15") && \
-        [ -z "$ST_VERSION" ] && ST_VERSION="v2.0.15" ; \
+        ST_VERSION=$(curl -s https://api.github.com/repos/syncthing/syncthing/releases/latest | jq -r '.tag_name // empty' || echo "v2.0.16") && \
+        [ -z "$ST_VERSION" ] && ST_VERSION="v2.0.16" ; \
         curl -fsSL "https://github.com/syncthing/syncthing/releases/download/${ST_VERSION}/syncthing-${ST_ARCH}-${ST_VERSION}.tar.gz" | tar -xz -C /tmp && \
         mv /tmp/syncthing-${ST_ARCH}-${ST_VERSION}/syncthing /usr/local/bin/ && \
         rm -rf /tmp/syncthing-${ST_ARCH}-${ST_VERSION}; \
@@ -227,8 +227,8 @@ RUN ARCH=$(dpkg --print-architecture) && \
         YAZI_ARCH=""; \
     fi && \
     if [ -n "$YAZI_ARCH" ]; then \
-        YAZI_VERSION=$(curl -s https://api.github.com/repos/sxyazi/yazi/releases/latest | jq -r '.tag_name // empty' || echo "v26.1.22") && \
-        [ -z "$YAZI_VERSION" ] && YAZI_VERSION="v26.1.22" ; \
+        YAZI_VERSION=$(curl -s https://api.github.com/repos/sxyazi/yazi/releases/latest | jq -r '.tag_name // empty' || echo "v26.5.6") && \
+        [ -z "$YAZI_VERSION" ] && YAZI_VERSION="v26.5.6" ; \
         curl -fsSL "https://github.com/sxyazi/yazi/releases/download/${YAZI_VERSION}/yazi-${YAZI_ARCH}.zip" -o /tmp/yazi.zip && \
         unzip -o /tmp/yazi.zip -d /tmp/yazi && \
         mv /tmp/yazi/yazi-${YAZI_ARCH}/yazi /usr/local/bin/ && \

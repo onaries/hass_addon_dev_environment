@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- 주요 CLI/바이너리 도구 fallback 버전 업데이트: nvm, delta, zellij, fzf, Syncthing, Yazi, GitUI, Just, Beads, Go.
+
 ## [1.3.0] - 2026-04-08
 
 ### Added
