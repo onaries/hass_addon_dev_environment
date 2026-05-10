@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-04-08
+
+### Added
+
+- Yazi 터미널 파일 매니저 설치 추가
+- 대시보드에 `.env.secrets` 설정 상태 표시 추가
+- 대시보드에 Yazi 버전 표시 추가
+- GitLab CLI(`glab`) 설치 및 대시보드 도구 목록 추가
+- OpenClaw gateway 포트 충돌 해결용 wrapper 스크립트 추가
+
+### Changed
+
+- OpenClaw supervisor 실행 시 바이너리 경로를 동적으로 탐색하도록 개선
+- Claude, Codex, Context7, OpenClaw, Qwen 등 AI 도구 설정의 영구 저장소 연동 개선
+- add-on 버전을 `1.3.0`으로 업데이트
+
 ## [1.2.27] - 2026-03-11
 
 ### Added
