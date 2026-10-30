@@ -54,7 +54,7 @@ jobs:
 
           docker volume create "$VOLUME_NAME" >/dev/null
           docker run --rm -v "$VOLUME_NAME:/data" local/python-dev-env:smoke \
-            sh -c 'mkdir -p /data/user_local/share/zinit && printf "{}\n" > /data/options.json'
+            sh -c 'printf "{}\n" > /data/options.json'
 
           docker run -d --name "$CONTAINER_NAME" \
             -v "$VOLUME_NAME:/data" \
@@ -70,7 +70,7 @@ jobs:
               break
             fi
 
-            if echo "$LOGS" | grep -q "Starting services via supervisord..."; then
+            if echo "$LOGS" | grep -q "Server listening on"; then
               RESULT="started"
               break
             fi
@@ -90,6 +90,10 @@ jobs:
             echo "::error::run.sh smoke test failed (result: $RESULT)"
             exit 1
           fi
+
+      - name: Verify SSH and Docker access
+        if: github.event_name == 'pull_request'
+        run: bash tests/ssh-docker-smoke.sh local/python-dev-env:smoke
 
       - name: Set up Docker Buildx
         if: github.event_name != 'pull_request'

@@ -1,14 +1,9 @@
 name: Python Development Environment
-version: "1.3.0"
+version: "1.3.1"
 slug: python_dev_env
-description: "Python 3.11 development environment with SSH, zsh, neovim, and modern tools"
+description: "SSH access and Docker CLI for Home Assistant"
 url: "https://github.com/onaries/hass_addon_dev_environment"
 image: "ksw8954/python-dev-env"
-ingress: true
-ingress_port: 8099
-ingress_stream: false
-panel_icon: mdi:monitor-dashboard
-panel_title: Dev Environment
 init: false
 docker_api: true
 full_access: true
@@ -18,22 +13,8 @@ arch:
   - amd64
 ports:
   "2322/tcp": 2322
-  "8317/tcp": 8317
-  "8384/tcp": 8384
-  "8100/tcp": 8100
-  "8787/tcp": 8787
-  "18789/tcp": 18789
-  "22000/tcp": 22000
-  "22000/udp": 22000
 ports_description:
   "2322/tcp": "SSH port"
-  "8317/tcp": "CLIProxyAPI"
-  "8384/tcp": "Syncthing Web GUI"
-  "8100/tcp": "Dashboard Web UI"
-  "8787/tcp": "Hermes Agent Web UI"
-  "18789/tcp": "OpenClaw Gateway"
-  "22000/tcp": "Syncthing file transfer"
-  "22000/udp": "Syncthing QUIC transfer"
 map:
   - "config:rw"
   - "ssl:rw"

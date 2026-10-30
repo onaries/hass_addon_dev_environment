@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 주요 CLI/바이너리 도구 fallback 버전 업데이트: nvm, delta, zellij, fzf, Syncthing, Yazi, GitUI, Just, Beads, Go.
 
+## [1.3.1] - 2026-10-30
+
+### Changed
+
+- SSH와 Docker CLI 및 Compose만 실행하도록 이미지를 간소화하고 기존 SSH 키와 영구 데이터를 보존.
+- 사용하지 않는 AI 서비스, Syncthing 및 대시보드 설치와 실행을 중단.
+- SSH 접속, Docker 접근 및 재시작 후 호스트 키 보존 검증 추가.
+
 ## [1.3.0] - 2026-04-08
 
 ### Added
